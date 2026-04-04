@@ -1,0 +1,74 @@
+// app global css in SCSS form
+.top-bar {
+  height: 60px;
+  background: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* SEARCH */
+.search-wrapper {
+  width: 260px;
+  background: #f1f3f6;
+  border-radius: 999px;
+  padding: 4px 12px;
+
+  .q-field__control {
+    height: 34px;
+  }
+
+  input {
+    font-size: 13px;
+  }
+}
+
+/* TITLE */
+.page-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+/* BUTTON */
+.quick-action-btn {
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+}
+
+body {
+  background: #f7f8fc;
+}
+
+.dashboard-page {
+  background: #f7f8fc;
+  padding: 24px;
+}
+
+/* CARD GLOBAL */
+.q-card {
+  border-radius: 14px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.stat-card {
+  height: 100%;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.attendance-card {
+  padding: 20px;
+}
+
+.leave-card,
+.payroll-card {
+  height: auto;
+  min-height: 140px;
+}
