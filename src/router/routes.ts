@@ -15,16 +15,23 @@ export interface SidebarItem {
 const DashboardPage = () => import('pages/DashboardPage.vue');
 const DirectoryPage = () => import('pages/DirectoryPage.vue');
 
-const TimeAttendancePage = () => import('pages/TimeAttendance.vue');
+const TimeAttendancePage = () => import('src/pages/MasterData/TimeAttendance.vue');
 
-const PayrollPage = () => import('pages/PayrollPage.vue');
-const PerformancePage = () => import('pages/PerformancePage.vue');
+const PayrollPage = () => import('src/pages/PayrollPage.vue');
+const PerformancePage = () => import('src/pages/PerformancePage.vue');
 
 const SettingsPage = () => import('pages/SettingsPage.vue');
 
 const MainLayout = () => import('layouts/MainLayout.vue');
-const TenantPage = () => import('pages/TenantPage.vue');
-const UsersPage = () => import('pages/UsersPage.vue');
+const TenantPage = () => import('src/pages/MasterData/TenantPage.vue');
+const UsersPage = () => import('pages/MasterData/UsersPage.vue');
+const RolesPages = () => import('src/pages/MasterData/RolesPages.vue');
+const PublicHolidayPage = () => import('src/pages/MasterData/PublicHoliday.vue');
+const WorkSchedulePage = () => import('src/pages/MasterData/WorkSchedule.vue');
+const LeaveBalancePage = () => import('src/pages/MasterData/LeaveBalance.vue');
+const DivisionPage = () => import('src/pages/MasterData/DivisionPage.vue');
+const EmployeePage = () => import('src/pages/MasterData/EmployeePage.vue');
+
 
 const LoginPage = () => import('pages/LoginPage.vue');
 
@@ -260,6 +267,78 @@ const routes: RouteRecordRaw[] = [
           title: 'Users',
           breadcrumb: [{
             label: 'Users',
+            to: '/',
+          }]
+        },
+      },
+      // roles
+      {
+        path: 'master-data/roles',
+        component: RolesPages,
+        meta: {
+          title: 'Roles',
+          breadcrumb: [{
+            label: 'Roles',
+            to: '/',
+          }]
+        },
+      },
+      // employee
+      {
+        path: 'master-data/employee',
+        component: EmployeePage,
+        meta: {
+          title: 'Employee',
+          breadcrumb: [{
+            label: 'Employee',
+            to: '/',
+          }]
+        },
+      },
+      // division
+      {
+        path: 'master-data/division',
+        component: DivisionPage,
+        meta: {
+          title: 'Division',
+          breadcrumb: [{
+            label: 'Division',
+            to: '/',
+          }]
+        },
+      },
+      // work schedule
+      {
+        path: 'master-data/work-schedule',
+        component: WorkSchedulePage,
+        meta: {
+          title: 'Work Schedule',
+          breadcrumb: [{
+            label: 'Work Schedule',
+            to: '/',
+          }]
+        },
+      },
+      // public holidays
+      {
+        path: 'master-data/public-holidays',
+        component: PublicHolidayPage,
+        meta: {
+          title: 'Public Holidays',
+          breadcrumb: [{
+            label: 'Public Holidays',
+            to: '/',
+          }]
+        },
+      },
+      // leave balance
+      {
+        path: 'master-data/leave-balance',
+        component: LeaveBalancePage,
+        meta: {
+          title: 'Leave Balance',
+          breadcrumb: [{
+            label: 'Leave Balance',
             to: '/',
           }]
         },

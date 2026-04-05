@@ -48,7 +48,6 @@
         <div class="text-center q-mt-sm text-grey">
           Forgot password?
         </div>
-
         <!-- FACE VIDEO -->
         <video ref="videoRef" autoplay muted class="face-video"></video>
 
