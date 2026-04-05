@@ -44,11 +44,13 @@
 
         <!-- FACE LOGIN -->
         <q-btn outline icon="face" label="Login with Face" class="full-width q-mt-sm" @click="startFaceAuth" />
-        <video ref="videoRef" autoplay muted class="face-video"></video>
 
-        <div class="text-center q-mt-sm text-grey">
-          Forgot password?
-        </div>
+                <div class="text-center q-mt-sm text-grey">
+                  Forgot password?
+                </div>
+
+                <!-- FACE VIDEO -->
+        <video ref="videoRef" autoplay muted class="face-video"></video>
 
       </q-card>
 
