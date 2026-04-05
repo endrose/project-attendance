@@ -1,4 +1,4 @@
-# aksadigitex-attendance-backOffice (aksa-temp)
+# aksadigitex-attendance-backOffice
 
 A Quasar Project
 
