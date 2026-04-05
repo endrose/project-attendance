@@ -63,6 +63,21 @@ export default defineConfig((ctx) => {
       // extendViteConf (viteConf) {},
       // viteVuePluginOptions: {},
 
+      // FACE API LIBRARY PLUGIN
+      vite: {
+        optimizeDeps: {
+          exclude: ['face-api.js']
+        },
+        resolve: {
+          alias: {
+            fs: false
+          }
+        },
+        define: {
+          global: {}
+        }
+      },
+
       vitePlugins: [
         [
           '@intlify/unplugin-vue-i18n/vite',

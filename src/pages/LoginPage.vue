@@ -1,61 +1,52 @@
 <template>
-  <div class="login-page row no-wrap">
+  <div class="login-page">
 
-    <!-- LEFT (BRANDING) -->
-    <div class="login-left column justify-between">
+    <!-- LEFT -->
+    <div class="login-left">
 
-      <div>
-        <!-- LOGO -->
-        <div class="logo row items-center q-mb-lg">
-          <div class="logo-icon">
-            <q-icon name="grid_view" size="22px" color="white" />
-          </div>
-          <div>
-            <div class="logo-title">Aksadigitex</div>
-            <div class="logo-sub">WORKFORCE MANAGEMENT</div>
-          </div>
-        </div>
-
-        <!-- HERO -->
-        <div class="hero-text">
-          <div class="text-h5 text-white">
-            Manage Workforce Easily
-          </div>
-
-          <div class="text-grey-3 q-mt-sm">
-            Monitor attendance, payroll, and performance
-            in one powerful dashboard.
-          </div>
+      <div class="brand">
+        <q-icon name="grid_view" size="28px" />
+        <div>
+          <div class="brand-title">Aksadigitex</div>
+          <div class="brand-sub">WORKFORCE MANAGEMENT</div>
         </div>
       </div>
 
-      <div class="text-grey-5 text-caption">
-        © {{ year }} Aksadigitex
+      <div class="hero">
+        <div class="hero-title">Manage Workforce Easily</div>
+        <div class="hero-sub">
+          Monitor attendance, payroll, and performance in one powerful dashboard.
+        </div>
       </div>
+
+      <div class="copyright">© 2026 Aksadigitex</div>
 
     </div>
 
-    <!-- RIGHT (FORM) -->
-    <div class="login-right flex flex-center">
+    <!-- RIGHT -->
+    <div class="login-right">
 
       <q-card class="login-card">
 
-        <div class="text-h6 text-weight-bold">
-          Sign In
-        </div>
-
-        <div class="text-caption text-grey q-mb-md">
+        <div class="text-h5 text-weight-bold">Sign In</div>
+        <div class="text-grey-6 q-mb-md">
           Welcome back! Please login to continue
         </div>
 
-        <!-- FORM -->
-        <q-input v-model="email" label="Email" outlined dense class="q-mb-sm" />
+        <!-- EMAIL -->
+        <q-input v-model="email" label="Email" outlined dense />
 
-        <q-input v-model="password" label="Password" type="password" outlined dense class="q-mb-md" />
+        <!-- PASSWORD -->
+        <q-input v-model="password" label="Password" type="password" outlined dense class="q-mt-md" />
 
-        <q-btn label="Login" color="primary" class="full-width q-mb-sm" @click="login" />
+        <!-- LOGIN BUTTON -->
+        <q-btn label="LOGIN" class="login-btn full-width q-mt-lg" @click="login" />
 
-        <div class="text-caption text-center text-grey">
+        <!-- FACE LOGIN -->
+        <q-btn outline icon="face" label="Login with Face" class="full-width q-mt-sm" @click="startFaceAuth" />
+        <video ref="videoRef" autoplay muted class="face-video"></video>
+
+        <div class="text-center q-mt-sm text-grey">
           Forgot password?
         </div>
 
@@ -69,28 +60,71 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import * as faceapi from 'face-api.js'
 
+const email = ref('')
+const password = ref('')
 const router = useRouter()
+const videoRef = ref<HTMLVideoElement | null>(null)
 
-const email = ref<string>('')
-const password = ref<string>('')
-// Year
-const year = new Date().getFullYear()
 
 const login = () => {
-  // dummy login
-  const validEmail = 'super_duper.admin@company.local'
-  const validPassword = 'SuperDuperAdmin123!'
-
-  if (email.value === validEmail && password.value === validPassword) {
-    // Redirect to main page
-    localStorage.setItem('isAuthenticated', 'true')
+  if (
+    email.value === 'super_duper.admin@company.local' &&
+    password.value === 'SuperDuperAdmin123!'
+  ) {
+    localStorage.setItem('isAuth', 'true')
     void router.push('/')
-  } else {
-    // Show error (for demo, using alert)
-    alert('Invalid email or password. Please try again.')
+  }
+}
 
+// 🔥 nanti kita isi face recognition
+
+
+const startFaceAuth = async () => {
+  await faceapi.nets.tinyFaceDetector.loadFromUri('/models')
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: true
+  })
+
+  if (!videoRef.value) return
+
+  videoRef.value.srcObject = stream
+
+  videoRef.value.onloadedmetadata = () => {
+    void videoRef.value?.play()
   }
 
+  videoRef.value.addEventListener('play', () => {
+    const interval = setInterval(() => {
+      void (async () => {
+        if (!videoRef.value) return
+
+        const detections = await faceapi.detectAllFaces(
+          videoRef.value,
+          new faceapi.TinyFaceDetectorOptions()
+        )
+
+        console.log('faces:', detections)
+
+        if (detections.length > 0) {
+          clearInterval(interval)
+
+          // STOP VIDEO STREAM
+          const stream = videoRef.value?.srcObject as MediaStream
+          stream?.getTracks().forEach(track => track.stop())
+
+          if (videoRef.value) {
+            videoRef.value.srcObject = null
+          }
+
+          localStorage.setItem('isAuth', 'true')
+          void router.push('/')
+        }
+      })()
+    }, 1000)
+  }, { once: true })
 }
+
 </script>
