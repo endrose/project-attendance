@@ -3,8 +3,12 @@
 
     <!-- Logo -->
     <div class="sidebar-logo">
-      <div class="logo-icon">
+      <!-- <div class="logo-icon">
         <q-icon name="grid_view" size="20px" color="white" />
+      </div> -->
+      <!-- LOGO DARI ASSET -->
+      <div class="logo-icon">
+        <img src="../../assets/png/logo.png" width="40px" alt="Logo Aksadigitex" class="logo-image" />
       </div>
       <div>
         <div class="logo-brand">Aksadigitex</div>
