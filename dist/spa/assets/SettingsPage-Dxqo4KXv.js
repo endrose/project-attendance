@@ -1,0 +1,1 @@
+import{O as e,f as t,l as n}from"./vue.runtime.esm-bundler-BD5e0tdr.js";import{t as r}from"./_plugin-vue_export-helper-0vLWKQyu.js";var i={},a={class:`tenant-page`};function o(r,i){return e(),t(`div`,a,[...i[0]||=[n(`h1`,null,`Settings Page`,-1),n(`p`,null,`This is the settings page content.`,-1)]])}var s=r(i,[[`render`,o]]);export{s as default};

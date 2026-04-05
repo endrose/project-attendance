@@ -17,7 +17,7 @@ const DirectoryPage = () => import('pages/DirectoryPage.vue');
 
 const TimeAttendancePage = () => import('pages/TimeAttendance.vue');
 
-const PayrollPage = () => import('pages/PayrolllPage.vue');
+const PayrollPage = () => import('pages/PayrollPage.vue');
 const PerformancePage = () => import('pages/PerformancePage.vue');
 
 const SettingsPage = () => import('pages/SettingsPage.vue');
