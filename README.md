@@ -1,43 +1,36 @@
-# aksadigitex-attendance-backOffice
+# 🚀 Aksadigitex Attendance BackOffice
 
-A Quasar Project
+Sistem **BackOffice Attendance** berbasis **Quasar Framework** yang dirancang untuk mempermudah pengelolaan data kehadiran secara efisien, cepat, dan scalable.
 
-## Install the dependencies
+> ⚡ Dibangun dengan teknologi modern untuk performa tinggi dan pengalaman developer yang nyaman.
+
+---
+
+## ✨ Fitur Utama
+
+- 📊 Dashboard monitoring kehadiran
+- 👥 Manajemen data karyawan
+- 🕒 Tracking dan rekap absensi
+- 📁 Export & reporting
+- ⚙️ Konfigurasi fleksibel
+
+---
+
+## 🛠️ Tech Stack
+
+- Quasar Framework (Vue.js)
+- Vite
+- JavaScript / TypeScript
+- ESLint & Prettier
+
+---
+
+## 📦 Instalasi
+
+Clone repository dan install dependencies:
 
 ```bash
 yarn
-# or
+# atau
 npm install
 ```
-
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
-
-```bash
-quasar dev
-```
-
-### Lint the files
-
-```bash
-yarn lint
-# or
-npm run lint
-```
-
-### Format the files
-
-```bash
-yarn format
-# or
-npm run format
-```
-
-### Build the app for production
-
-```bash
-quasar build
-```
-
-### Customize the configuration
-
-See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).

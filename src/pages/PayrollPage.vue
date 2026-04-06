@@ -89,7 +89,7 @@
 
       <!-- RIGHT: Stats -->
       <div class="col-12 col-md-4">
-        <div class="column q-gutter-md full-height">
+        <div class="column q-gutter-md">
 
           <!-- Processed Employees -->
           <q-card flat bordered class="mini-stat-card mini-stat-card--green">

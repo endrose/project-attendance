@@ -63,7 +63,7 @@
           <q-btn flat dense round icon="menu" @click="$emit('toggle-menu')" />
           <div class="mobile-title">
             <template v-if="isDashboard">Workforce Central</template>
-            <template v-else>{{ pageTitle }}</template>
+            <template v-else> {{ pageTitle }}</template>
           </div>
         </div>
 

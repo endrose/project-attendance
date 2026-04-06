@@ -53,7 +53,7 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => MainLayout(),
     meta: {
-      requiresAuth: false,
+      requiresAuth: true,
       menu:
         [
           //
@@ -183,7 +183,9 @@ const routes: RouteRecordRaw[] = [
           breadcrumb: [{
             label: 'Dashboard',
             to: '/',
-          }]
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       {
@@ -194,7 +196,9 @@ const routes: RouteRecordRaw[] = [
           breadcrumb: [{
             label: 'Directory',
             to: '/directory',
-          }]
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // time attendance
@@ -206,7 +210,9 @@ const routes: RouteRecordRaw[] = [
           breadcrumb: [{
             label: 'Time Attendance',
             to: '/time-attendance',
-          }]
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // payroll
@@ -218,7 +224,9 @@ const routes: RouteRecordRaw[] = [
           breadcrumb: [{
             label: 'Payroll',
             to: '/payroll',
-          }]
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // performance
@@ -230,7 +238,9 @@ const routes: RouteRecordRaw[] = [
           breadcrumb: [{
             label: 'Performance',
             to: '/performance',
-          }]
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // settings
@@ -242,7 +252,9 @@ const routes: RouteRecordRaw[] = [
           breadcrumb: [{
             label: 'Settings',
             to: '/settings',
-          }]
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
 
       },
@@ -254,9 +266,11 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Tenant',
           breadcrumb: [{
-            label: 'Tenant',
-            to: '/',
-          }]
+            label: 'Master Data Tenant',
+            to: '/master-data/tenant',
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // users
@@ -266,9 +280,11 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Users',
           breadcrumb: [{
-            label: 'Users',
-            to: '/',
-          }]
+            label: 'Master Data Users',
+            to: '/master-data/users',
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // roles
@@ -278,9 +294,11 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Roles',
           breadcrumb: [{
-            label: 'Roles',
-            to: '/',
-          }]
+            label: 'Master Data Roles',
+            to: '/master-data/roles',
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // employee
@@ -290,9 +308,11 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Employee',
           breadcrumb: [{
-            label: 'Employee',
-            to: '/',
-          }]
+            label: 'Master Data Employee',
+            to: '/master-data/employee',
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // division
@@ -302,9 +322,11 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Division',
           breadcrumb: [{
-            label: 'Division',
-            to: '/',
-          }]
+            label: 'Master Data Division',
+            to: '/master-data/division',
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // work schedule
@@ -314,9 +336,11 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Work Schedule',
           breadcrumb: [{
-            label: 'Work Schedule',
-            to: '/',
-          }]
+            label: 'Master Data Work Schedule',
+            to: '/master-data/work-schedule',
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // public holidays
@@ -326,9 +350,11 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Public Holidays',
           breadcrumb: [{
-            label: 'Public Holidays',
-            to: '/',
-          }]
+            label: 'Master Data Public Holidays',
+            to: '/master-data/public-holidays',
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
       // leave balance
@@ -338,9 +364,11 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Leave Balance',
           breadcrumb: [{
-            label: 'Leave Balance',
-            to: '/',
-          }]
+            label: 'Master Data Leave Balance',
+            to: '/master-data/leave-balance',
+          }],
+          requiresAuth: true // 🔥 WAJIB
+
         },
       },
 

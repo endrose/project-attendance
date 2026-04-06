@@ -77,7 +77,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item clickable v-ripple @click="logout">
+      <q-item clickable v-ripple @click="handleLogout">
         <q-item-section avatar>
           <q-icon name="logout" />
         </q-item-section>
@@ -95,9 +95,11 @@
 import { useRoute, useRouter } from 'vue-router'
 import { computed, reactive, watchEffect } from 'vue'
 import type { SidebarItem } from 'src/router/routes'
+import { useAuthStore } from 'src/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore();
 
 const navItems = computed<SidebarItem[]>(() => {
   return (route.meta.menu as SidebarItem[]) || []
@@ -118,10 +120,12 @@ watchEffect(() => {
   })
 })
 
-const logout = () => {
-  localStorage.removeItem('isAuth')
-  void router.push('/login')
+ function handleLogout(){
+  auth.logoutRemote();
+  void router.replace('/login');
 }
+
+
 </script>
 
 <style scoped>

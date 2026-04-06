@@ -6,6 +6,7 @@ import {
   createWebHistory,
 } from 'vue-router';
 import routes from './routes';
+import { useAuthStore } from 'src/stores/auth';
 
 const APP_TITLE = 'AksaDigitex Attendance BackOffice';
 
@@ -35,21 +36,33 @@ export default defineRouter(function (/* { store, ssrContext } */) {
   });
 
   // BeforeEach route
-  Router.beforeEach((to, from, next) => {
-    // Check if the route requires authentication
-    const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+  Router.beforeEach((to) => {
+    const auth = useAuthStore();
 
-    // Here you would check if the user is authenticated
-    const isAuthenticated = false; // Replace with actual authentication check
+    auth.hydrateUserFromStorage();
 
-    if (requiresAuth && !isAuthenticated) {
-      // If the route requires auth and the user isn't authenticated, redirect to login
-      next('/login');
-    } else {
-      // Otherwise, proceed to the route
-      next();
+    const isAuthenticated = auth.isAuthenticated;
+    const isLogin = to.path === '/login';
+
+    // 🔥 semua route kecuali login wajib auth
+    if (!isLogin && !isAuthenticated) {
+      return {
+        path: '/login',
+        query: { redirect: to.fullPath },
+      };
     }
+
+    if (to.matched.some((r) => r.meta.requiresSuperAdmin) && !auth.isSuperAdmin) {
+      return '/';
+    }
+
+    if (isLogin && isAuthenticated) {
+      return '/';
+    }
+
+    return true;
   });
+
 
   // Always leave this as last one,
   // but you can also remove it
