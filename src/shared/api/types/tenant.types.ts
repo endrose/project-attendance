@@ -1,17 +1,18 @@
 export interface CreateTenantRequestDto {
-  tenantId: string;
   name: string;
+  companyCode: string;
+  tenantId: string;
 }
 
 export interface UpdateTenantRequestDto {
   id: string;
-  tenantId: string;
+  companyCode: string;
   name: string;
 }
 
 export interface TenantResponseDto {
   id: string;
-  tenantId: string;
+  companyCode: string;
   name: string;
   createdAt: string;
   updatedAt: string;

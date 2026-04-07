@@ -1,7 +1,10 @@
 import type { AxiosInstance } from "axios";
 import axios from "axios";
 import type { LoginRequestBody, LoginResponseDto } from "../api/types/auth.types";
-import type { TenantResponseDto } from "../api/types/tenant.types";
+import type { CreateTenantRequestDto, TenantResponseDto } from "../api/types/tenant.types";
+import { useAuthStore } from 'src/stores/auth';
+import type { CreateEmployeeRequestDto, EmployeeResponseDto } from "../api/types/employee.type";
+import type { DivisionResponsetDto } from "../api/types/division.type";
 
 const API_PREFIX = 'attendance/v1';
 
@@ -38,19 +41,35 @@ export const backendClient: AxiosInstance = axios.create({
 });
 
 // ✅ PASANG DI SINI
-backendClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('attendance_token');
-  console.log({
-    'config': 'Bearer ' + token,
-  });
+backendClient.interceptors.request.use(
+  (config) => {
+    let token: string | null = null;
 
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
+    try {
+      const authStore = useAuthStore();
+      token = authStore.token;
+    } catch {
+      token = sessionStorage.getItem('attendance_token') || localStorage.getItem('attendance_token');
+    }
+
+    if (!token) {
+      token = sessionStorage.getItem('attendance_token') || localStorage.getItem('attendance_token');
+    }
+
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error: unknown) => {
+    // PERBAIKAN DI SINI:
+    // Pastikan alasan rejection adalah sebuah objek Error
+    const rejection = error instanceof Error ? error : new Error(String(error));
+    return Promise.reject(rejection);
   }
-
-  return config;
-});
+);
 
 const authPlainClient: AxiosInstance = axios.create({
   baseURL: BACKEND_BASE_URL,
@@ -76,20 +95,88 @@ export async function fetchAuthMe(): Promise<LoginResponseDto> {
   return data;
 }
 
-export async function getTenants(tenantID: string) {
-  const { data } = await backendClient.get<TenantResponseDto[]>(`${API_PREFIX}/Division/GetAllDivisionsByTenant/${tenantID}`,
+export async function getTenantById(tenantID: string) {
+  const { data } = await backendClient.get<TenantResponseDto>(`${API_PREFIX}/GetTenantById/${tenantID}`,
   );
   return data;
 }
+
+export async function deleteTenantById(tenantID: string) {
+  const { data } = await backendClient.delete<TenantResponseDto>(`${API_PREFIX}/Tenants/Delete/${tenantID}`,
+  );
+  return data;
+}
+
+export async function getTenants() {
+  const { data } = await backendClient.get<TenantResponseDto[]>(`${API_PREFIX}/Tenants`);
+  return data;
+}
+
+export async function createTenants(body: CreateTenantRequestDto) {
+  const { data } = await backendClient.post<TenantResponseDto[]>(`${API_PREFIX}/Tenants/Create`, body);
+  return data;
+}
+
+export async function updateTenant(body: CreateTenantRequestDto, tenantID: string) {
+  const { data } = await backendClient.put<TenantResponseDto[]>(`${API_PREFIX}/Tenants/Update/${tenantID}`, body);
+  return data;
+}
+
+// EMPLOYEE
+export async function getEmployeeByTenandId(tenantId: string) {
+  const { data } = await backendClient.get<EmployeeResponseDto[]>(`${API_PREFIX}/Employee/GetAllEmployeesByTenant/${tenantId}`);
+  return data;
+}
+
+export async function createEmployee(body: CreateEmployeeRequestDto) {
+  const { data } = await backendClient.post<EmployeeResponseDto[]>(`${API_PREFIX}/Employee/CreateEmployee`, body);
+  return data;
+}
+
+export async function updateEmployee(body: CreateEmployeeRequestDto, employeeId: string) {
+  const { data } = await backendClient.put<EmployeeResponseDto>(`${API_PREFIX}/Employee/UpdateEmployee/${employeeId}`, body);
+  return data;
+}
+
+export async function getEmployeeById(employeeId: string) {
+  const { data } = await backendClient.get<EmployeeResponseDto>(`${API_PREFIX}/Employee/GetEmployeeById/${employeeId}`,);
+  return data;
+}
+
+// DIVISION
+export async function getDivisionByTenandId(tenantId: string) {
+  const { data } = await backendClient.get<DivisionResponsetDto[]>(`${API_PREFIX}/Division/GetAllDivisionsByTenant/${tenantId}`);
+  return data;
+}
+
 
 export const BackendApiContract = {
   baseUrl: BACKEND_BASE_URL,
   endpoints: {
     authLogin: 'POST attendance/v1/Auth/Login',
     authMe: 'POST attendance/v1/Auth/Login',
-    tenant: 'GET attendance/v1/Tenants/:tenantID'
+    tenant: 'GET attendance/v1/Tenants/:tenantID',
+    createTenant: 'POST attendance/v1/Tenants/create',
+    tenantsById: 'GET attendance/v1/GetTenantById/:tenantID',
+    deleteTenant: 'DELETE attendance/v1/Tenants/Delete/:tenantID',
+    updateTenant: 'PUT attendance/v1/Tenants/Update/:tenantID',
+    getEmployeeByTenandId: 'GET attendance/v1/Employee/GetAllEmployeesByTenant/:employeeId',
+    createEmployee: 'POST attendance/v1/CreateEmployee',
+    getDivisionByTenandId: 'GET attendance/v1/Division/GetAllDivisionsByTenant/:tenantId',
+    getEmployeeById: 'GET attendance/v1/Employee/GetEmployeeById',
+    updateEmployee: 'PUT attendance/v1/Employee/UpdateEmployee/:employeeId',
+
   },
   login,
   fetchAuthMe,
-  getTenants
+  getTenants,
+  createTenants,
+  getTenantById,
+  deleteTenantById,
+  updateTenant,
+  getEmployeeByTenandId,
+  createEmployee,
+  getDivisionByTenandId,
+  getEmployeeById,
+  updateEmployee
 } as const;

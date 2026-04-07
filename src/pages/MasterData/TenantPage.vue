@@ -58,13 +58,13 @@
           <template #body-cell-actions="props">
             <q-td :props="props">
               <div class="row items-center q-gutter-sm justify-end">
-                <q-btn flat round dense icon="visibility" size="sm" color="grey-6">
-                  <q-tooltip>View Details</q-tooltip>
+                <q-btn flat round dense icon="visibility" size="sm" color="grey-6 " @click="openViewForm(props.row)">
+                  <q-tooltip>View Details </q-tooltip>
                 </q-btn>
-                <q-btn flat round dense icon="edit" size="sm" color="grey-6">
+                <q-btn flat round dense icon="edit" size="sm" color="grey-6" @click="openEditForm(props.row)">
                   <q-tooltip>Edit</q-tooltip>
                 </q-btn>
-                <q-btn flat round dense icon="delete" size="sm" color="negative">
+                <q-btn flat round dense icon="delete" size="sm" color="negative" @click="confirmDelete(props.row)">
                   <q-tooltip>Delete</q-tooltip>
                 </q-btn>
               </div>
@@ -82,14 +82,14 @@
       </q-card-section>
 
       <!-- MODAL -->
-      <q-dialog v-model="showForm">
+      <q-dialog v-model="showForm" persistent>
         <q-card class="modal-card">
 
           <!-- Header -->
           <div class="modal-header">
             <div>
               <div class="modal-title">
-                {{ isEdit ? 'Edit Tenant' : 'Add New Tenant' }}
+                {{ isView ? 'Tenant Details' : isEdit ? 'Edit Tenant' : 'Add New Tenant' }}
               </div>
               <div class="modal-sub">
                 Fill the form below to {{ isEdit ? 'update tenant' : 'create a new tenant' }}
@@ -100,18 +100,16 @@
           <!-- Form -->
           <div class="q-mt-md q-gutter-md">
 
-            <q-input v-model="form.name" label="Tenant Name" outlined dense />
+            <q-input v-model="form.name" label="Tenant Name" outlined dense :disable="isView" />
 
-            <q-input v-model="form.tenantId" label="Tenant ID" outlined dense />
-
-
+            <q-input v-model="form.companyCode" label="Company Code" outlined dense :disable="isView" />
 
           </div>
 
           <!-- Actions -->
           <div class="row justify-end q-gutter-sm q-mt-lg">
             <q-btn flat label="Cancel" v-close-popup />
-            <q-btn label="Save" color="dark" />
+            <q-btn v-if="!isView" label="Save" color="dark" @click="saveTenant" :loading="isSubmitting" />
           </div>
 
         </q-card>
@@ -123,55 +121,199 @@
 
 <script setup lang="ts">
 import type { CreateTenantRequestDto, TenantResponseDto } from 'src/shared/api/types/tenant.types'
-import { getTenants } from 'src/shared/services/backendApiContract'
+import { getTenants, createTenants, deleteTenantById, updateTenant } from 'src/shared/services/backendApiContract'
 import { ref, computed, onMounted } from 'vue'
+import { useQuasar } from 'quasar'
 
+const $q = useQuasar()
 const currentPage = ref(1)
 const searchQuery = ref('')
 const showForm = ref(false)
 const isEdit = ref(false)
+const isView = ref(false)
 const isLoading = ref(false);
-const tenantId = ref('1a780d07-dd9b-4b2f-83c5-1c0b0a5c676d');
+const isSubmitting = ref(false) // Loading khusus tombol save
+const selectedId = ref<string | null>(null) // Simpan ID untuk keperluan update
 
 const tenants = ref<TenantResponseDto[]>([]);
 
 const form = ref<CreateTenantRequestDto>({
   tenantId: '',
-  name: ''
+  name: '',
+  companyCode: '',
 })
 
+// Fetch Data
+const fetchTenants = async () => {
+  isLoading.value = true
+  $q.loading.show({
+    message: 'Fetching tenant...'
+  })
+  try {
+    tenants.value = await getTenants()
+  } catch { // <--- Hapus (error) jika tidak digunakan
+    $q.notify({ color: 'negative', message: 'Failed to fetch tenants' })
+  } finally {
+    isLoading.value = false
+    $q.loading.hide()
+  }
+}
 
 onMounted(async () => {
-  // Fetch tenants
-  isLoading.value = true;
-  try {
-    tenants.value = await getTenants(tenantId.value);
-
-  } catch {
-    tenants.value = [];
-  } finally {
-    isLoading.value = false;
-  }
+  await fetchTenants();
 })
 
 
 
 const openForm = () => {
   isEdit.value = false
-
+  isView.value = false
   form.value = {
     tenantId: '',
-    name: ''
+    name: '',
+    companyCode: '',
+  }
+  showForm.value = true
+}
+
+const openEditForm = (row: TenantResponseDto) => {
+  isEdit.value = true
+  selectedId.value = row.id // Simpan ID database
+
+  // Isi form dengan data yang ada
+  form.value = {
+    tenantId: row.id,
+    name: row.name,
+    companyCode: row.companyCode || '' // Pastikan field sesuai dengan DTO Anda
+  }
+
+  showForm.value = true
+}
+
+const openViewForm = (row: TenantResponseDto) => {
+  isView.value = true
+  selectedId.value = row.id // Simpan ID database
+
+  // Isi form dengan data yang ada
+  form.value = {
+    tenantId: row.id,
+    name: row.name,
+    companyCode: row.companyCode || '' // Pastikan field sesuai dengan DTO Anda
   }
 
   showForm.value = true
 }
 
 
+// Save Tenant (Create & Update)
+const saveTenant = async () => {
+  // 1. Validasi input
+  if (!form.value.name || !form.value.companyCode) {
+    $q.notify({ color: 'warning', message: 'Please fill all required fields' })
+    return
+  }
+
+  isSubmitting.value = true
+  try {
+    if (isEdit.value && selectedId.value) {
+      // --- LOGIKA UPDATE ---
+      await updateTenant(form.value, selectedId.value)
+
+      $q.notify({
+        color: 'positive',
+        message: 'Tenant updated successfully',
+        icon: 'edit'
+      })
+    } else {
+      // --- LOGIKA CREATE ---
+      await createTenants(form.value)
+
+      $q.notify({
+        color: 'positive',
+        message: 'Tenant created successfully',
+        icon: 'check'
+      })
+    }
+
+    // 2. Refresh data dari server agar sinkron
+    await fetchTenants()
+
+    // 3. Tutup modal dan reset state
+    showForm.value = false
+    selectedId.value = null
+    isEdit.value = false
+    isView.value = false
+
+  } catch {
+    $q.notify({
+      color: 'negative',
+      message: 'Failed to save tenant'
+    })
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// Fungsi untuk memicu dialog konfirmasi
+const confirmDelete = (row: TenantResponseDto) => {
+  $q.dialog({
+    title: 'Confirm Delete',
+    message: `Are you sure you want to delete tenant "${row.name}"?`,
+    persistent: true,
+    ok: {
+      label: 'Delete',
+      color: 'negative',
+      flat: true
+    },
+    cancel: {
+      label: 'Cancel',
+      color: 'grey-7',
+      flat: true
+    }
+  }).onOk(() => {
+    void onDeleteTenant(row.id)
+  })
+}
+// Fungsi eksekusi ke API
+const onDeleteTenant = async (id: string) => {
+  // 1. Tampilkan loading overlay
+  $q.loading.show({
+    message: 'Deleting tenant...'
+  })
+
+  try {
+    // 2. Eksekusi API call
+    console.log({ id })
+    await deleteTenantById(id)
+
+    // 3. Update State Lokal secara Reaktif
+    // Menggunakan filter untuk menghapus data dari UI tanpa re-fetch
+    tenants.value = tenants.value.filter(t => t.id !== id)
+
+    // 4. Notifikasi Berhasil
+    $q.notify({
+      color: 'positive',
+      message: 'Tenant deleted successfully',
+      icon: 'delete'
+    })
+  } catch {
+    // 5. Penanganan Error
+    $q.notify({
+      color: 'negative',
+      message: 'Failed to delete tenant. Please try again.'
+    })
+  } finally {
+    // 6. Tutup loading overlay (selalu dijalankan baik sukses maupun gagal)
+    $q.loading.hide()
+  }
+}
+
 
 const columns = [
-  { name: 'tenantId', label: 'TENANT ID', field: 'tenantId', align: 'left' as const },
-  { name: 'name', label: 'NAME', field: 'name', align: 'left' as const },
+  { name: 'id', label: 'TENANT ID', field: 'id', align: 'left' as const },
+  { name: 'name', label: 'COMPANY NAME', field: 'name', align: 'left' as const },
+  { name: 'createdAt', label: 'CREATE', field: 'name', align: 'left' as const },
+
   { name: 'actions', label: 'ACTIONS', field: 'actions', align: 'right' as const },
 ]
 
@@ -182,9 +324,10 @@ const filteredTenants = computed(() => {
 
   return tenants.value.filter(t =>
     t.name.toLowerCase().includes(q) ||
-    t.tenantId.toLowerCase().includes(q)
+    t.companyCode.toLowerCase().includes(q)
   )
 })
+
 </script>
 
 <style scoped>
