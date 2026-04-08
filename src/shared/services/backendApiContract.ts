@@ -3,7 +3,7 @@ import axios from "axios";
 import type { LoginRequestBody, LoginResponseDto } from "../api/types/auth.types";
 import type { CreateTenantRequestDto, TenantResponseDto } from "../api/types/tenant.types";
 import { useAuthStore } from 'src/stores/auth';
-import type { CreateEmployeeRequestDto, EmployeeResponseDto } from "../api/types/employee.type";
+import type { CreateEmployeeRequestDto, EmployeeCreateResponseDto, EmployeeResponseDto, UpdateEmployeeRequestDto } from "../api/types/employee.type";
 import type { CreateDivisionRequestDto, DivisionResponsetDto } from "../api/types/division.type";
 
 const API_PREFIX = 'attendance/v1';
@@ -129,11 +129,11 @@ export async function getEmployeeByTenandId(tenantId: string) {
 }
 
 export async function createEmployee(body: CreateEmployeeRequestDto) {
-  const { data } = await backendClient.post<EmployeeResponseDto[]>(`${API_PREFIX}/Employee/CreateEmployee`, body);
+  const { data } = await backendClient.post<EmployeeCreateResponseDto[]>(`${API_PREFIX}/Employee/CreateEmployee`, body);
   return data;
 }
 
-export async function updateEmployee(body: CreateEmployeeRequestDto, employeeId: string) {
+export async function updateEmployee(body: UpdateEmployeeRequestDto, employeeId: string) {
   const { data } = await backendClient.put<EmployeeResponseDto>(`${API_PREFIX}/Employee/UpdateEmployee/${employeeId}`, body);
   return data;
 }

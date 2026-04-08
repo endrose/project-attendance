@@ -146,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CreateEmployeeRequestDto, EmployeeResponseDto, } from 'src/shared/api/types/employee.type'
+import type { CreateEmployeeRequestDto, EmployeeResponseDto } from 'src/shared/api/types/employee.type'
 import type { TenantResponseDto } from 'src/shared/api/types/tenant.types'
 import type { DivisionResponsetDto } from 'src/shared/api/types/division.type'
 import { getEmployeeByTenandId, getTenants, createEmployee, getDivisionByTenandId, getEmployeeById, updateEmployee } from 'src/shared/services/backendApiContract'
@@ -181,38 +181,6 @@ const employeeViewFrom = ref<EmployeeResponseDto>({
   faceEmbedding: '',
 })
 
-const openEditForm = async (row: EmployeeResponseDto) => {
-  isEdit.value = true
-  isView.value = false
-  showForm.value = true
-  isLoading.value = true
-
-  try {
-    const data = await getEmployeeById(row.id)
-    selectedId.value = data.id
-
-    formEmployee.value = {
-      tenantId: data.tenantId,
-      divisionId: data.divisionId,
-      employeeCode: data.employeeCode,
-      fullName: data.fullName,
-      position: data.position,
-      basicSalary: data.basicSalary,
-      facePhotoUrl: data.facePhotoUrl ?? '',
-      faceEmbedding: data.faceEmbedding ?? '',
-      companyCode: '' // kalau belum ada dari API
-    }
-
-  } catch {
-    $q.notify({
-      color: 'negative',
-      message: 'Failed to fetch employee detail'
-    })
-  } finally {
-    isLoading.value = false
-  }
-}
-
 const employees = ref<EmployeeResponseDto[]>([])
 const tenants = ref<TenantResponseDto[]>([])
 const divisions = ref<DivisionResponsetDto[]>([])
@@ -233,9 +201,63 @@ const formEmployee = ref<CreateEmployeeRequestDto>({
   basicSalary: 0,
   facePhotoUrl: '',
   faceEmbedding: '',
-  companyCode: ''
 
 })
+
+const openEditForm = async (row: EmployeeResponseDto) => {
+
+  isEdit.value = true
+
+  isView.value = false
+
+  showForm.value = true
+
+  isLoading.value = true
+
+  try {
+
+    const data = await getEmployeeById(row.id)
+
+    selectedId.value = data.id
+
+    formEmployee.value = {
+
+      tenantId: data.tenantId,
+
+      divisionId: data.divisionId,
+
+      employeeCode: data.employeeCode,
+
+      fullName: data.fullName,
+
+      position: data.position,
+
+      basicSalary: data.basicSalary,
+
+      facePhotoUrl: data.facePhotoUrl ?? '',
+
+      faceEmbedding: data.faceEmbedding ?? '',
+    }
+
+
+
+  } catch {
+
+    $q.notify({
+
+      color: 'negative',
+
+      message: 'Failed to fetch employee detail'
+
+    })
+
+  } finally {
+
+    isLoading.value = false
+
+  }
+
+}
 
 const viewFormEmployee = ref<EmployeeResponseDto>({
   id: '',
@@ -262,7 +284,6 @@ const openForm = () => {
     basicSalary: 0,
     facePhotoUrl: '',
     faceEmbedding: '',
-    companyCode: ''
   }
   showForm.value = true
 }
@@ -541,6 +562,17 @@ const saveEmployee = async () => {
   isSubmitting.value = true
   try {
     if (isEdit.value) {
+      console.log({
+        formEmployee: formEmployee.value
+      });
+
+      // Logika Update
+
+      //  UpdateEmployeeRequestDto
+      // pakai dto updateEmployee
+
+
+
       await updateEmployee(formEmployee.value, selectedId.value)
       $q.notify({
         color: 'positive',
