@@ -1,39 +1,65 @@
 <template>
   <div class="tenant-page q-pa-lg">
-
     <q-card flat bordered class="table-card">
       <q-card-section>
-
         <!-- Header -->
         <div class="row items-center justify-between q-mb-md">
           <div>
             <div class="section-title">Tenant Management</div>
-            <div class="section-sub">Manage all registered tenants and their operational status</div>
+            <div class="section-sub">
+              Manage all registered tenants and their operational status
+            </div>
           </div>
 
           <div class="row items-center q-gutter-md">
             <!-- Search Bar -->
-            <q-input v-model="searchQuery" dense outlined placeholder="Search tenants..." class="search-input">
+            <q-input
+              v-model="searchQuery"
+              dense
+              outlined
+              placeholder="Search tenants..."
+              class="search-input"
+            >
               <template v-slot:prepend>
                 <q-icon name="search" />
               </template>
             </q-input>
 
             <!-- Add Button -->
-            <q-btn unelevated color="dark" icon="add_business" label="Add New Tenant" size="sm" class="action-btn-dark"
-              @click="openForm()" />
+            <q-btn
+              unelevated
+              color="dark"
+              icon="add_business"
+              label="Add New Tenant"
+              size="sm"
+              class="action-btn-dark"
+              @click="openForm()"
+            />
           </div>
         </div>
 
         <!-- Table -->
-        <q-table flat :rows="filteredTenants" :columns="columns" row-key="id" hide-bottom class="directory-table">
-
+        <q-table
+          flat
+          :rows="filteredTenants"
+          :columns="columns"
+          row-key="id"
+          hide-bottom
+          class="directory-table"
+        >
           <!-- Company Name -->
           <template #body-cell-company="props">
             <q-td :props="props">
               <div class="row items-center q-gutter-sm">
-                <q-avatar size="38px"
-                  :style="{ background: props.row.avatarBg, color: '#fff', fontWeight: 600, fontSize: '13px' }">
+                <q-avatar
+                  size="38px"
+                  :style="{
+                    background: props.row.avatarBg,
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                  }"
+                >
                   {{ props.row.initials }}
                 </q-avatar>
                 <div>
@@ -48,7 +74,11 @@
           <template #body-cell-status="props">
             <q-td :props="props">
               <span
-                :class="['status-badge', props.row.status === 'ACTIVE' ? 'status-badge--active' : 'status-badge--inactive']">
+                :class="[
+                  'status-badge',
+                  props.row.status === 'ACTIVE' ? 'status-badge--active' : 'status-badge--inactive',
+                ]"
+              >
                 {{ props.row.status }}
               </span>
             </q-td>
@@ -58,8 +88,8 @@
           <template #body-cell-actions="props">
             <q-td :props="props">
               <div class="row items-center q-gutter-sm justify-end">
-                <q-btn flat round dense icon="visibility" size="sm" color="grey-6 " @click="openViewForm(props.row)">
-                  <q-tooltip>View Details </q-tooltip>
+                <q-btn flat round dense icon="visibility" size="sm" color="grey-6" @click="openViewForm(props.row)">
+                  <q-tooltip>View Details</q-tooltip>
                 </q-btn>
                 <q-btn flat round dense icon="edit" size="sm" color="grey-6" @click="openEditForm(props.row)">
                   <q-tooltip>Edit</q-tooltip>
@@ -70,21 +100,24 @@
               </div>
             </q-td>
           </template>
-
         </q-table>
 
         <!-- Pagination (Dummy) -->
         <div class="row items-center justify-between q-mt-md">
           <div class="pagination-info">Showing {{ filteredTenants.length }} entries</div>
-          <q-pagination v-model="currentPage" :max="1" direction-links color="dark" active-color="dark" />
+          <q-pagination
+            v-model="currentPage"
+            :max="1"
+            direction-links
+            color="dark"
+            active-color="dark"
+          />
         </div>
-
       </q-card-section>
 
       <!-- MODAL -->
       <q-dialog v-model="showForm" persistent>
         <q-card class="modal-card">
-
           <!-- Header -->
           <div class="modal-header">
             <div>
@@ -99,11 +132,9 @@
 
           <!-- Form -->
           <div class="q-mt-md q-gutter-md">
-
             <q-input v-model="form.name" label="Tenant Name" outlined dense :disable="isView" />
 
             <q-input v-model="form.companyCode" label="Company Code" outlined dense :disable="isView" />
-
           </div>
 
           <!-- Actions -->
@@ -111,11 +142,96 @@
             <q-btn flat label="Cancel" v-close-popup />
             <q-btn v-if="!isView" label="Save" color="dark" @click="saveTenant" :loading="isSubmitting" />
           </div>
-
         </q-card>
       </q-dialog>
     </q-card>
 
+    <!-- VIEW TENANT DETAILS MODAL -->
+    <q-dialog v-model="viewDialog">
+      <q-card style="width: 650px; max-width: 80vw; border-radius: 12px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6 text-weight-bold">Tenant Details</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-separator class="q-mt-md" />
+
+        <q-card-section class="q-pa-lg">
+          <div v-if="selectedTenant" class="row q-col-gutter-lg">
+            <!-- Avatar column -->
+            <div class="col-12 col-sm-4 flex flex-center column">
+              <q-avatar
+                size="100px"
+                :style="{
+                  background: selectedTenant.avatarBg,
+                  color: '#fff',
+                  fontSize: '36px',
+                  fontWeight: 600,
+                }"
+              >
+                {{ selectedTenant.initials }}
+              </q-avatar>
+              <div class="q-mt-md text-h6 text-center text-weight-bold">
+                {{ selectedTenant.company }}
+              </div>
+              <div class="text-grey-7 text-center">{{ selectedTenant.tenantId }}</div>
+            </div>
+
+            <!-- Details column -->
+            <div class="col-12 col-sm-8">
+              <div class="text-subtitle2 q-mb-sm text-primary text-weight-bold">
+                Company Information
+              </div>
+              <div class="row q-col-gutter-sm q-mb-md">
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-grey-7">Tenant ID</div>
+                  <div class="text-body2 text-weight-medium">{{ selectedTenant.tenantId }}</div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-grey-7">Industry</div>
+                  <div class="text-body2 text-weight-medium">{{ selectedTenant.industry }}</div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-grey-7">Location</div>
+                  <div class="text-body2 text-weight-medium">{{ selectedTenant.location }}</div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-grey-7">Status</div>
+                  <q-badge :color="selectedTenant.status === 'ACTIVE' ? 'positive' : 'grey'">{{
+                    selectedTenant.status
+                  }}</q-badge>
+                </div>
+              </div>
+
+              <q-separator class="q-my-md" />
+
+              <div class="text-subtitle2 q-mb-sm text-primary text-weight-bold">
+                Contact Details
+              </div>
+              <div class="row q-col-gutter-sm">
+                <div class="col-12">
+                  <div class="text-caption text-grey-7">Admin Email Address</div>
+                  <div class="text-body2 text-weight-medium">
+                    admin@{{ selectedTenant.company.replace(/\s+/g, '').toLowerCase() }}.com
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="text-caption text-grey-7">Support Phone Number</div>
+                  <div class="text-body2 text-weight-medium">+1 (800) 123-4567</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn unelevated label="Close" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
@@ -135,7 +251,22 @@ const isLoading = ref(false);
 const isSubmitting = ref(false) // Loading khusus tombol save
 const selectedId = ref<string | null>(null) // Simpan ID untuk keperluan update
 
-const tenants = ref<TenantResponseDto[]>([]);
+interface UIRow extends TenantResponseDto {
+  company: string;
+  tenantId: string;
+  initials: string;
+  avatarBg: string;
+  industry: string;
+  location: string;
+  status: string;
+}
+
+const viewDialog = ref(false);
+const selectedTenant = ref<UIRow | null>(null);
+
+
+
+const tenants = ref<UIRow[]>([]);
 
 const form = ref<CreateTenantRequestDto>({
   tenantId: '',
@@ -150,8 +281,18 @@ const fetchTenants = async () => {
     message: 'Fetching tenant...'
   })
   try {
-    tenants.value = await getTenants()
-  } catch { // <--- Hapus (error) jika tidak digunakan
+    const data = await getTenants()
+    tenants.value = data.map(t => ({
+      ...t,
+      company: t.name,
+      tenantId: t.id,
+      initials: t.name.substring(0, 2).toUpperCase(),
+      avatarBg: '#1a73e8',
+      industry: 'N/A',
+      location: 'N/A',
+      status: 'ACTIVE'
+    })) as UIRow[]
+  } catch {
     $q.notify({ color: 'negative', message: 'Failed to fetch tenants' })
   } finally {
     isLoading.value = false
@@ -313,21 +454,19 @@ const columns = [
   { name: 'id', label: 'TENANT ID', field: 'id', align: 'left' as const },
   { name: 'name', label: 'COMPANY NAME', field: 'name', align: 'left' as const },
   { name: 'createdAt', label: 'CREATE', field: 'name', align: 'left' as const },
-
   { name: 'actions', label: 'ACTIONS', field: 'actions', align: 'right' as const },
-]
+];
 
 const filteredTenants = computed(() => {
-  if (!searchQuery.value) return tenants.value
+  if (!searchQuery.value) return tenants.value;
 
-  const q = searchQuery.value.toLowerCase()
+  const q = searchQuery.value.toLowerCase();
 
   return tenants.value.filter(t =>
-    t.name.toLowerCase().includes(q) ||
-    t.companyCode.toLowerCase().includes(q)
+    (t.name && t.name.toLowerCase().includes(q)) ||
+    (t.companyCode && t.companyCode.toLowerCase().includes(q))
   )
 })
-
 </script>
 
 <style scoped>
@@ -428,7 +567,6 @@ const filteredTenants = computed(() => {
   font-size: 13px;
   color: #667085;
 }
-
 
 .modal-card {
   width: 420px;

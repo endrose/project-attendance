@@ -9,41 +9,36 @@
       </div>
       <div class="row q-gutter-md">
         <!-- Import Button -->
-        <q-btn outline color="primary" icon="file_upload" label="Import Holidays" class="btn-outline-regular" @click="triggerImport" />
+        <q-btn outline color="primary" icon="file_upload" label="Import Holidays" class="btn-outline-regular"
+          @click="triggerImport" />
         <!-- Add Button -->
-        <q-btn unelevated color="dark" icon="event_available" label="Add Holiday" class="action-btn-dark" />
+        <q-btn unelevated color="dark" icon="event_available" label="Add Holiday" class="action-btn-dark"
+          @click="openAddDialog" />
       </div>
     </div>
 
     <!-- Layout Split -->
     <div class="row q-col-gutter-lg">
-      
+
       <!-- LEFT: Summary / Small Calendar Widget -->
       <div class="col-12 col-md-4">
         <q-card flat bordered class="table-card">
           <q-card-section>
             <div class="section-title q-mb-md">Calendar View</div>
-            
-            <q-date 
-              v-model="calendarDate" 
-              minimal 
-              flat 
-              color="primary"
-              :events="holidayEvents" 
-              event-color="negative"
-              class="full-width q-mb-md custom-calendar" 
-            />
+
+            <q-date v-model="calendarDate" minimal flat color="primary" :events="holidayEvents" event-color="negative"
+              class="full-width q-mb-md custom-calendar" />
 
             <div class="q-pt-md border-top">
               <div class="detail-label q-mb-md">UPCOMING HOLIDAYS</div>
               <div class="upcoming-list q-gutter-y-sm">
-                <div v-for="h in holidays.slice(0,3)" :key="h.id" class="upcoming-item">
+                <div v-for="h in holidays.slice(0, 3)" :key="h.id" class="upcoming-item">
                   <div class="row items-center justify-between">
                     <div>
                       <div class="upcoming-name">{{ h.name }}</div>
                       <div class="upcoming-cat">{{ h.category }}</div>
                     </div>
-                    <span class="upcoming-date">{{ h.shortDate }}</span>
+                    <span class="upcoming-date">{{ formatShortDate(h.date) }}</span>
                   </div>
                 </div>
               </div>
@@ -57,21 +52,29 @@
       <div class="col-12 col-md-8">
         <q-card flat bordered class="table-card full-height">
           <q-card-section>
-            
+
             <div class="row items-center justify-between q-mb-md">
-              <div class="section-title">Holiday Registry (2026)</div>
+              <div class="section-title">Holiday Registry</div>
               <q-input v-model="searchQuery" dense outlined placeholder="Search events..." class="search-input">
                 <template v-slot:prepend><q-icon name="search" /></template>
               </q-input>
             </div>
 
             <!-- Table -->
-            <q-table flat :rows="filteredHolidays" :columns="columns" row-key="id" hide-bottom class="directory-table">
-              
+            <q-table flat :loading="loading" :rows="filteredHolidays" :columns="columns" row-key="id" hide-bottom
+              class="directory-table">
+
               <!-- Holiday Name -->
               <template #body-cell-name="props">
                 <q-td :props="props">
                   <span class="holiday-name">{{ props.row.name }}</span>
+                </q-td>
+              </template>
+
+              <!-- Date -->
+              <template #body-cell-date="props">
+                <q-td :props="props">
+                  <span>{{ formatFullDate(props.row.date) }}</span>
                 </q-td>
               </template>
 
@@ -88,14 +91,19 @@
               <template #body-cell-actions="props">
                 <q-td :props="props">
                   <div class="row items-center q-gutter-sm justify-end">
-                    <q-btn flat round dense icon="edit" size="sm" color="grey-6" />
-                    <q-btn flat round dense icon="delete" size="sm" color="negative" />
+                    <q-btn flat round dense icon="edit" size="sm" color="grey-6" @click="openEditDialog(props.row)">
+                      <q-tooltip>Edit Holiday</q-tooltip>
+                    </q-btn>
+                    <q-btn flat round dense icon="delete" size="sm" color="negative"
+                      @click="openDeleteDialog(props.row)">
+                      <q-tooltip>Delete Holiday</q-tooltip>
+                    </q-btn>
                   </div>
                 </q-td>
               </template>
 
             </q-table>
-            
+
             <div class="row items-center justify-between q-mt-md">
               <div class="pagination-info">Showing {{ filteredHolidays.length }} holidays</div>
               <q-pagination v-model="currentPage" :max="1" direction-links color="dark" active-color="dark" />
@@ -107,50 +115,314 @@
 
     </div>
 
+    <!-- CREATE HOLIDAY MODAL -->
+    <q-dialog v-model="addDialog" persistent>
+      <q-card style="width: 400px; max-width: 80vw; border-radius: 12px;">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6 text-weight-bold">Add Holiday</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup color="grey-6" />
+        </q-card-section>
+
+        <q-separator class="q-mt-md" />
+
+        <q-card-section class="q-pa-md">
+          <q-form @submit="submitCreateHoliday">
+            <div class="row q-col-gutter-md">
+              <div class="col-12">
+                <q-input v-model="addForm.name" label="Holiday Name *" outlined dense
+                  :rules="[val => !!val || 'Required']" />
+              </div>
+              <div class="col-12">
+                <q-input v-model="addForm.date" label="Date (YYYY-MM-DD) *" outlined dense mask="####-##-##"
+                  :rules="[val => !!val || 'Required']">
+                  <template v-slot:append>
+                    <q-icon name="event" class="cursor-pointer">
+                      <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                        <q-date v-model="addForm.date" mask="YYYY-MM-DD">
+                          <div class="row items-center justify-end">
+                            <q-btn v-close-popup label="Close" color="primary" flat />
+                          </div>
+                        </q-date>
+                      </q-popup-proxy>
+                    </q-icon>
+                  </template>
+                </q-input>
+              </div>
+              <div class="col-12">
+                <q-select v-model="addForm.category" :options="categoryOptions" label="Category *" outlined dense
+                  :rules="[val => !!val || 'Required']" />
+              </div>
+            </div>
+
+            <div class="row justify-end q-mt-md q-gutter-sm">
+              <q-btn outline label="Cancel" color="grey-7" v-close-popup />
+              <q-btn unelevated label="Save" color="primary" type="submit" :loading="saving" />
+            </div>
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <!-- EDIT HOLIDAY MODAL -->
+    <q-dialog v-model="editDialog" persistent>
+      <q-card style="width: 400px; max-width: 80vw; border-radius: 12px;">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6 text-weight-bold">Edit Holiday</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup color="grey-6" />
+        </q-card-section>
+
+        <q-separator class="q-mt-md" />
+
+        <q-card-section class="q-pa-md">
+          <q-form @submit="submitEditHoliday">
+            <div class="row q-col-gutter-md">
+              <div class="col-12">
+                <q-input v-model="editForm.name" label="Holiday Name *" outlined dense
+                  :rules="[val => !!val || 'Required']" />
+              </div>
+              <div class="col-12">
+                <q-input v-model="editForm.date" label="Date (YYYY-MM-DD) *" outlined dense mask="####-##-##"
+                  :rules="[val => !!val || 'Required']">
+                  <template v-slot:append>
+                    <q-icon name="event" class="cursor-pointer">
+                      <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                        <q-date v-model="editForm.date" mask="YYYY-MM-DD">
+                          <div class="row items-center justify-end">
+                            <q-btn v-close-popup label="Close" color="primary" flat />
+                          </div>
+                        </q-date>
+                      </q-popup-proxy>
+                    </q-icon>
+                  </template>
+                </q-input>
+              </div>
+              <div class="col-12">
+                <q-select v-model="editForm.category" :options="categoryOptions" label="Category *" outlined dense
+                  :rules="[val => !!val || 'Required']" />
+              </div>
+            </div>
+
+            <div class="row justify-end q-mt-md q-gutter-sm">
+              <q-btn outline label="Cancel" color="grey-7" v-close-popup />
+              <q-btn unelevated label="Update" color="primary" type="submit" :loading="saving" />
+            </div>
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <!-- DELETE HOLIDAY MODAL -->
+    <q-dialog v-model="deleteDialog" persistent>
+      <q-card style="width: 450px; max-width: 80vw; border-radius: 12px; border-top: 4px solid #f04438;">
+        <q-card-section class="column items-center q-pt-lg text-center">
+          <q-avatar icon="warning" color="red-1" text-color="negative" size="56px" class="q-mb-sm" />
+          <div class="text-h6 text-weight-bold q-mb-sm">Delete Holiday</div>
+          <div class="text-body2 text-grey-7" style="max-width: 300px;">
+            Are you sure you want to delete <strong>{{ selectedHoliday?.name }}</strong>? This action cannot be undone.
+          </div>
+        </q-card-section>
+
+        <q-separator class="q-mt-md" />
+
+        <q-card-actions align="between" class="q-pa-md">
+          <q-btn outline label="Cancel" color="grey-7" v-close-popup class="col" style="max-width: 48%" />
+          <q-btn unelevated label="Confirm Delete" color="negative" @click="submitDeleteHoliday" :loading="saving"
+            class="col" style="max-width: 48%" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useQuasar } from 'quasar'
+import { ref, computed, onMounted } from 'vue'
+import { useQuasar, date } from 'quasar'
+import { getHolidaysByTenantId, createHoliday, updateHoliday, deleteHoliday } from 'src/shared/services/backendApiContract'
+import type { PublicHolidayResponseDto } from 'src/shared/api/types/publicHoliday.types'
 
 const $q = useQuasar()
+const loading = ref(false)
+const saving = ref(false)
 const currentPage = ref(1)
 const searchQuery = ref('')
+const selectedTenantId = '1a780d07-dd9b-4b2f-83c5-1c0b0a5c676d' // Mock tenant context
 
-// Initialize standard date view (for dummy layout)
-const calendarDate = ref('2026/04/03')
+const calendarDate = ref(date.formatDate(Date.now(), 'YYYY/MM/DD'))
 
-const holidays = ref([
-  { id: 1, name: 'New Year\'s Day', date: 'January 1, 2026', shortDate: '01 Jan', eventDate: '2026/01/01', category: 'National Holiday' },
-  { id: 2, name: 'Good Friday', date: 'April 3, 2026', shortDate: '03 Apr', eventDate: '2026/04/03', category: 'National Holiday' },
-  { id: 3, name: 'Company Retreat', date: 'May 15, 2026', shortDate: '15 May', eventDate: '2026/05/15', category: 'Corporate Event' },
-  { id: 4, name: 'Independence Day', date: 'August 17, 2026', shortDate: '17 Aug', eventDate: '2026/08/17', category: 'National Holiday' },
-  { id: 5, name: 'Christmas Day', date: 'December 25, 2026', shortDate: '25 Dec', eventDate: '2026/12/25', category: 'Observance' },
-])
+const holidays = ref<PublicHolidayResponseDto[]>([])
 
-const holidayEvents = computed(() => holidays.value.map(h => h.eventDate))
+const categoryOptions = ['National Holiday', 'Corporate Event', 'Observance']
+
+const holidayEvents = computed(() => {
+  return holidays.value.map(h => {
+    // Format YYYY-MM-DD or ISO to YYYY/MM/DD for q-date parsing
+    try {
+      const d = new Date(h.date)
+      if (!isNaN(d.getTime())) {
+        return date.formatDate(d, 'YYYY/MM/DD')
+      }
+    } catch { /* ignore */ }
+    return h.date
+  })
+})
 
 const columns = [
-  { name: 'name', label: 'HOLIDAY NAME', field: 'name', align: 'left' as const },
+  { name: 'description', label: 'HOLIDAY NAME', field: 'description', align: 'left' as const },
   { name: 'date', label: 'DATE', field: 'date', align: 'left' as const },
   { name: 'category', label: 'CATEGORY', field: 'category', align: 'left' as const },
   { name: 'actions', label: '', field: 'actions', align: 'right' as const },
 ]
 
 const filteredHolidays = computed(() => {
-  if (!searchQuery.value) return holidays.value
-  const q = searchQuery.value.toLowerCase()
-  return holidays.value.filter(h => 
-    h.name.toLowerCase().includes(q) || 
-    h.category.toLowerCase().includes(q)
-  )
+  let result = holidays.value
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    result = result.filter(h =>
+      h.name.toLowerCase().includes(q) ||
+      h.category.toLowerCase().includes(q)
+    )
+  }
+  // Sort by date ascending
+  return result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 })
+
+const formatFullDate = (val: string) => {
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) return date.formatDate(d, 'MMMM D, YYYY');
+  } catch { /* ignore */ }
+  return val;
+}
+
+const formatShortDate = (val: string) => {
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) return date.formatDate(d, 'DD MMM');
+  } catch { /* ignore */ }
+  return val;
+}
 
 const getCatClass = (cat: string) => {
   if (cat === 'National Holiday') return 'cat-national'
   if (cat === 'Corporate Event') return 'cat-corporate'
   return 'cat-observance'
+}
+
+// Fetch Logic
+const fetchHolidays = async () => {
+  loading.value = true
+  try {
+    const data = await getHolidaysByTenantId(selectedTenantId)
+    holidays.value = data || []
+  } catch {
+    $q.notify({ color: 'negative', message: 'Failed to fetch holidays' })
+    holidays.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+// Create Logic
+const addDialog = ref(false)
+const addForm = ref({ name: '', date: '', category: 'National Holiday' })
+
+const openAddDialog = () => {
+  addForm.value = { name: '', date: date.formatDate(Date.now(), 'YYYY-MM-DD'), category: 'National Holiday' }
+  addDialog.value = true
+}
+
+const submitCreateHoliday = async () => {
+  saving.value = true
+  $q.loading.show()
+  try {
+    await createHoliday({
+      name: addForm.value.name,
+      date: addForm.value.date,
+      category: addForm.value.category,
+      tenantId: selectedTenantId
+    })
+    $q.notify({ color: 'positive', message: 'Holiday created successfully', position: 'top' })
+    addDialog.value = false
+    await fetchHolidays()
+  } catch {
+    $q.notify({ color: 'negative', message: 'Failed to create holiday', position: 'top' })
+  } finally {
+    saving.value = false
+    $q.loading.hide()
+  }
+}
+
+// Edit Logic
+const editDialog = ref(false)
+const editForm = ref({ id: '', name: '', date: '', category: '' })
+const selectedHoliday = ref<PublicHolidayResponseDto | null>(null)
+
+const openEditDialog = (holiday: PublicHolidayResponseDto) => {
+  selectedHoliday.value = holiday
+
+  // Format date to YYYY-MM-DD for the input mask
+  let formattedDate = holiday.date
+  try {
+    const d = new Date(holiday.date)
+    if (!isNaN(d.getTime())) formattedDate = date.formatDate(d, 'YYYY-MM-DD')
+  } catch { /* ignore */ }
+
+  editForm.value = {
+    id: holiday.id,
+    name: holiday.name,
+    date: formattedDate,
+    category: holiday.category
+  }
+  editDialog.value = true
+}
+
+const submitEditHoliday = async () => {
+  if (!editForm.value.id) return
+  saving.value = true
+  $q.loading.show()
+  try {
+    await updateHoliday(editForm.value.id, {
+      name: editForm.value.name,
+      date: editForm.value.date,
+      category: editForm.value.category
+    })
+    $q.notify({ color: 'positive', message: 'Holiday updated successfully', position: 'top' })
+    editDialog.value = false
+    await fetchHolidays()
+  } catch {
+    $q.notify({ color: 'negative', message: 'Failed to update holiday', position: 'top' })
+  } finally {
+    saving.value = false
+    $q.loading.hide()
+  }
+}
+
+// Delete Logic
+const deleteDialog = ref(false)
+
+const openDeleteDialog = (holiday: PublicHolidayResponseDto) => {
+  selectedHoliday.value = holiday
+  deleteDialog.value = true
+}
+
+const submitDeleteHoliday = async () => {
+  if (!selectedHoliday.value) return
+  saving.value = true
+  $q.loading.show()
+  try {
+    await deleteHoliday(selectedHoliday.value.id)
+    $q.notify({ color: 'positive', message: 'Holiday deleted successfully', position: 'top' })
+    deleteDialog.value = false
+    await fetchHolidays()
+  } catch {
+    $q.notify({ color: 'negative', message: 'Failed to delete holiday', position: 'top' })
+  } finally {
+    saving.value = false
+    $q.loading.hide()
+  }
 }
 
 const triggerImport = () => {
@@ -161,6 +433,10 @@ const triggerImport = () => {
     position: 'top'
   })
 }
+
+onMounted(() => {
+  void fetchHolidays()
+})
 </script>
 
 <style scoped>
@@ -214,6 +490,7 @@ const triggerImport = () => {
 .search-input {
   width: 240px;
 }
+
 .search-input :deep(.q-field__control) {
   border-radius: 8px;
 }

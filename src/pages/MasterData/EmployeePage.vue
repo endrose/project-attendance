@@ -5,19 +5,22 @@
       <q-card-section>
 
         <!-- Header -->
-        <!-- ROW 1 -->
-        <div class="row items-center justify-between q-mb-xs">
-
-          <!-- TITLE -->
-          <div class="section-title">
-            Employee Master Data
+        <div class="row items-center justify-between q-mb-md">
+          <div>
+            <div class="section-title">Employee Master Data</div>
+            <div class="section-sub">Manage all employee records, departments, and roles</div>
           </div>
 
-          <!-- ACTION -->
-          <div class="row items-center q-gutter-sm">
+          <div class="row items-center q-gutter-md">
+            <!-- SELECT TENANT -->
+            <q-select v-model="selectedTenantId" :options="tenantOptions" label="Filter by Tenant" outlined dense
+              emit-value map-options class="tenant-select" clearable>
+              <template v-slot:prepend>
+                <q-icon name="business" />
+              </template>
+            </q-select>
 
-            <q-select v-model="selectedTenantId" :options="tenantOptions" dense outlined emit-value map-options
-              class="tenant-select" />
+
 
             <q-input v-model="searchQuery" dense outlined placeholder="Search employees..." class="search-input">
               <template v-slot:prepend>
@@ -25,15 +28,9 @@
               </template>
             </q-input>
 
-            <q-btn unelevated color="indigo-10" icon="person_add" label="ADD NEW EMPLOYEE" class="add-btn"
+            <q-btn unelevated color="dark" icon="person_add" label="Add New Employee" size="sm" class="action-btn-dark"
               @click="openForm" />
-
           </div>
-        </div>
-
-        <!-- ROW 2 (SUBTITLE) -->
-        <div class="section-sub q-mb-md">
-          Manage all employee records, departments, and roles
         </div>
 
         <!-- Table -->
@@ -56,7 +53,7 @@
             </q-td>
           </template>
 
-          <!-- Employee Position -->
+          <!-- Division & Position -->
           <template #body-cell-role="props">
             <q-td :props="props">
               <div class="employee-position">{{ props.row.position }}</div>
@@ -75,18 +72,16 @@
 
           <!-- Actions -->
           <template #body-cell-actions="props">
-            <q-td :props="props" class="text-right">
-              <div class="action-group">
-                <q-btn flat round dense icon="visibility" size="sm" color="primary" @click="openViewForm(props.row)">
-                  <q-tooltip>View Details</q-tooltip>
+            <q-td :props="props">
+              <div class="row items-center q-gutter-sm justify-end">
+                <q-btn flat round dense icon="visibility" size="sm" color="grey-6" @click="viewProfile(props.row)">
+                  <q-tooltip>View Profile</q-tooltip>
                 </q-btn>
-
-                <q-btn flat round dense icon="edit" size="sm" color="warning" @click="openEditForm(props.row)">
-                  <q-tooltip>Edit</q-tooltip>
+                <q-btn flat round dense icon="edit" size="sm" color="grey-6" @click="openEditForm(props.row)">
+                  <q-tooltip>Edit Data</q-tooltip>
                 </q-btn>
-
                 <q-btn flat round dense icon="delete" size="sm" color="negative" @click="confirmDelete(props.row)">
-                  <q-tooltip>Delete</q-tooltip>
+                  <q-tooltip class="bg-negative text-white">Delete Employee</q-tooltip>
                 </q-btn>
               </div>
             </q-td>
@@ -105,7 +100,7 @@
 
       <!-- DIALOG FORM -->
       <q-dialog v-model="showForm" persistent>
-        <q-card class="modal-card">
+        <q-card class="modal-card" style="min-width: 450px;">
           <q-card-section class="modal-header">
             <div class="modal-title">
               {{ isView ? 'Employee Details' : isEdit ? 'Edit Employee' : 'Add New Employee' }}
@@ -115,32 +110,109 @@
             </div>
           </q-card-section>
 
-
-          <!-- FORM VIEW  -->
           <q-card-section class="q-pt-none q-gutter-md">
-            <q-select v-model="activeForm.tenantId" :options="tenantOptions" label="Tenant" outlined dense emit-value
-              map-options :disable="isView" />
+            <q-select v-model="formEmployee.tenantId" :options="tenantOptions" label="Tenant" outlined dense emit-value
+              map-options />
 
-            <q-select v-model="activeForm.divisionId" :options="divisionOptions" label="Division" outlined dense
-              emit-value map-options :disable="isView || !activeForm.tenantId" :loading="isLoading" />
 
-            <q-input v-model="activeForm.fullName" label="Full Name" outlined dense :disable="isView" />
+            <!-- SELECT DIVISIOn -->
+            <q-select v-model="formEmployee.divisionId" :options="divisionOptions" label="Division" outlined dense
+              :disable="!formEmployee.tenantId" emit-value map-options />
 
-            <q-input v-model="activeForm.employeeCode" label="Employee Code" outlined dense :disable="isView" />
 
-            <q-input v-model="activeForm.position" label="Position" outlined dense :disable="isView" />
 
-            <q-input v-model.number="activeForm.basicSalary" label="Basic Salary" type="number" outlined dense
+            <q-input v-model="formEmployee.fullName" label="Full Name" outlined dense :disable="isView" />
+
+            <q-input v-model="formEmployee.employeeCode" label="Employee Code" outlined dense :disable="isView" />
+
+            <q-input v-model="formEmployee.position" label="Position" outlined dense :disable="isView" />
+
+
+            <q-input v-model.number="formEmployee.basicSalary" label="Basic Salary" type="number" outlined dense
               :disable="isView" />
           </q-card-section>
 
-          <q-card-actions class="row justify-end q-gutter-sm q-mt-lg">
+          <q-card-actions align="right" class="q-pa-md">
             <q-btn flat label="Cancel" color="grey-7" v-close-popup />
             <q-btn v-if="!isView" label="Save" color="dark" unelevated :loading="isSubmitting" @click="saveEmployee" />
           </q-card-actions>
         </q-card>
       </q-dialog>
     </q-card>
+
+    <!-- VIEW PROFILE MODAL -->
+    <q-dialog v-model="viewDialog">
+      <q-card style="width: 650px; max-width: 80vw; border-radius: 12px;">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6 text-weight-bold">Employee Profile</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-separator class="q-mt-md" />
+
+        <q-card-section class="q-pa-lg">
+          <div v-if="selectedEmployee" class="row q-col-gutter-lg">
+            <!-- Avatar column -->
+            <div class="col-12 col-sm-4 flex flex-center column">
+              <q-avatar size="100px"
+                :style="{ background: selectedEmployee.avatarBg, color: '#fff', fontSize: '36px', fontWeight: 600 }">
+                {{ selectedEmployee.initials }}
+              </q-avatar>
+              <div class="q-mt-md text-h6 text-center text-weight-bold">{{ selectedEmployee.fullName }}</div>
+              <div class="text-grey-7 text-center">{{ selectedEmployee.position }}</div>
+            </div>
+
+            <!-- Details column -->
+            <div class="col-12 col-sm-8">
+              <div class="text-subtitle2 q-mb-sm text-primary text-weight-bold">Work Details</div>
+              <div class="row q-col-gutter-sm q-mb-md">
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-grey-7">Employee ID (NIK)</div>
+                  <div class="text-body2 text-weight-medium">{{ selectedEmployee.nik }}</div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-grey-7">Division</div>
+                  <div class="text-body2 text-weight-medium">{{ selectedEmployee.division }}</div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-grey-7">Join Date</div>
+                  <div class="text-body2 text-weight-medium">{{ selectedEmployee.joinDate }}</div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-grey-7">Status</div>
+                  <q-badge :color="selectedEmployee.status === 'Permanent' ? 'primary' : 'secondary'">{{
+                    selectedEmployee.status }}</q-badge>
+                </div>
+              </div>
+
+              <q-separator class="q-my-md" />
+
+              <div class="text-subtitle2 q-mb-sm text-primary text-weight-bold">Personal Information</div>
+              <div class="row q-col-gutter-sm">
+                <div class="col-12">
+                  <div class="text-caption text-grey-7">Email Address</div>
+                  <div class="text-body2 text-weight-medium">contact@{{ selectedEmployee.initials.toLowerCase()
+                    }}.example.com</div>
+                </div>
+                <div class="col-12">
+                  <div class="text-caption text-grey-7">Phone Number</div>
+                  <div class="text-body2 text-weight-medium">+1 (555) 123-4567</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn unelevated label="Close" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+
 
   </div>
 </template>
@@ -149,14 +221,11 @@
 import type { CreateEmployeeRequestDto, EmployeeResponseDto } from 'src/shared/api/types/employee.type'
 import type { TenantResponseDto } from 'src/shared/api/types/tenant.types'
 import type { DivisionResponsetDto } from 'src/shared/api/types/division.type'
-import { getEmployeeByTenandId, getTenants, createEmployee, getDivisionByTenandId, getEmployeeById, updateEmployee } from 'src/shared/services/backendApiContract'
+import { getEmployeeByTenandId, getTenants, createEmployee, getDivisionByTenandId, deleteEmployee, getEmployeeById, updateEmployee } from 'src/shared/services/backendApiContract'
 import { useQuasar } from 'quasar'
+import { ref, computed, onMounted, watch } from 'vue'
 
 const $q = useQuasar()
-
-import { ref, computed, onMounted, watch } from 'vue'
-import { deleteEmployee } from '../../shared/services/backendApiContract'
-
 const currentPage = ref(1)
 const searchQuery = ref('')
 const isLoading = ref(false)
@@ -168,29 +237,23 @@ const isSubmitting = ref(false)
 let lastDivisionRequestId = 0
 const selectedId = ref('')
 
+interface EmployeeRow extends EmployeeResponseDto {
+  initials: string;
+  avatarBg: string;
+  nik: string;
+  status: string;
+  division?: string;
+  joinDate?: string;
+}
 
-const employeeViewFrom = ref<EmployeeResponseDto>({
-  id: '',
-  tenantId: '',
-  divisionId: '',
-  employeeCode: '',
-  fullName: '',
-  position: '',
-  basicSalary: 0,
-  facePhotoUrl: '',
-  faceEmbedding: '',
-})
+const viewDialog = ref(false)
+const selectedEmployee = ref<EmployeeRow | null>(null)
 
-const employees = ref<EmployeeResponseDto[]>([])
+const employees = ref<EmployeeRow[]>([])
 const tenants = ref<TenantResponseDto[]>([])
 const divisions = ref<DivisionResponsetDto[]>([])
 
 const selectedTenantId = ref(defaultTenants)  // State untuk tenant yang dipilih
-// const selectedEmployeeId = ref('')  // State untuk tenant yang dipilih
-
-const activeForm = computed(() =>
-  isView.value ? viewFormEmployee.value : formEmployee.value
-)
 
 const formEmployee = ref<CreateEmployeeRequestDto>({
   tenantId: defaultTenants,
@@ -201,80 +264,12 @@ const formEmployee = ref<CreateEmployeeRequestDto>({
   basicSalary: 0,
   facePhotoUrl: '',
   faceEmbedding: '',
-
-})
-
-const openEditForm = async (row: EmployeeResponseDto) => {
-
-  isEdit.value = true
-
-  isView.value = false
-
-  showForm.value = true
-
-  isLoading.value = true
-
-  try {
-
-    const data = await getEmployeeById(row.id)
-
-    selectedId.value = data.id
-
-    formEmployee.value = {
-
-      tenantId: data.tenantId,
-
-      divisionId: data.divisionId,
-
-      employeeCode: data.employeeCode,
-
-      fullName: data.fullName,
-
-      position: data.position,
-
-      basicSalary: data.basicSalary,
-
-      facePhotoUrl: data.facePhotoUrl ?? '',
-
-      faceEmbedding: data.faceEmbedding ?? '',
-    }
-
-
-
-  } catch {
-
-    $q.notify({
-
-      color: 'negative',
-
-      message: 'Failed to fetch employee detail'
-
-    })
-
-  } finally {
-
-    isLoading.value = false
-
-  }
-
-}
-
-const viewFormEmployee = ref<EmployeeResponseDto>({
-  id: '',
-  tenantId: defaultTenants,
-  divisionId: '',
-  employeeCode: '',
-  fullName: '',
-  position: '',
-  basicSalary: 0,
-  facePhotoUrl: '',
-  faceEmbedding: '',
-
 })
 
 const openForm = () => {
   isEdit.value = false
   isView.value = false
+  selectedId.value = ''
   formEmployee.value = {
     tenantId: defaultTenants,
     divisionId: '',
@@ -288,61 +283,59 @@ const openForm = () => {
   showForm.value = true
 }
 
-const openViewForm = async (row: EmployeeResponseDto) => {
-  isView.value = true
-  isEdit.value = false
-
+// Open edit form: fetches full employee data from API and pre-fills form
+const openEditForm = async (row: EmployeeRow) => {
+  isEdit.value = true
+  isView.value = false
   showForm.value = true
   isLoading.value = true
-
   try {
     const data = await getEmployeeById(row.id)
-
-    viewFormEmployee.value = {
-      id: data.id,
+    selectedId.value = data.id
+    formEmployee.value = {
       tenantId: data.tenantId,
       divisionId: data.divisionId,
       employeeCode: data.employeeCode,
       fullName: data.fullName,
       position: data.position,
       basicSalary: data.basicSalary,
-      facePhotoUrl: data.facePhotoUrl || '',
-      faceEmbedding: data.faceEmbedding || '',
+      facePhotoUrl: data.facePhotoUrl ?? '',
+      faceEmbedding: data.faceEmbedding ?? '',
     }
-
   } catch {
-    $q.notify({
-      color: 'negative',
-      message: 'Failed to fetch employee detail'
-    })
+    $q.notify({ color: 'negative', message: 'Failed to fetch employee detail' })
+    showForm.value = false
   } finally {
     isLoading.value = false
   }
 }
 
-// const openViewForm = async (row: EmployeeResponseDto) => {
-//   const data = await getEmployeeById(row.id)
-//   viewFormEmployee.value = {
-//     id: data.id,
-//     tenantId: data.tenantId,
-//     divisionId: data.divisionId,
-//     employeeCode: data.employeeCode,
-//     fullName: data.fullName,
-//     position: data.position,
-//     basicSalary: data.basicSalary,
-//     facePhotoUrl: data.facePhotoUrl || '',
-//     faceEmbedding: data.faceEmbedding || '',
-//   }
-// }
+// Open view profile using real API data
+const viewProfile = async (row: EmployeeRow) => {
+  selectedEmployee.value = row
+  viewDialog.value = true
+  isLoading.value = true
+  try {
+    const data = await getEmployeeById(row.id)
+    selectedEmployee.value = {
+      ...row,
+      fullName: data.fullName,
+      position: data.position,
+      employeeCode: data.employeeCode,
+      divisionId: data.divisionId,
+      nik: data.employeeCode,
+    }
+  } catch {
+    // keep the row data already set above
+  } finally {
+    isLoading.value = false
+  }
+}
 
 const columns = [
-  { name: 'id', label: 'EMPLOYEE ID', field: 'id', align: 'left' as const },
-  { name: 'tenantId', label: 'TENANT ID', field: 'tenantId', align: 'left' as const },
-  { name: 'divisionId', label: 'DIVISION ID', field: 'divisionId', align: 'left' as const },
-  { name: 'employeeCode', label: 'EMPLOYEE CODE', field: 'employeeCode', align: 'left' as const },
-  { name: 'fullName', label: 'FULLNAME', field: 'fullName', align: 'left' as const },
-  { name: 'position', label: 'POSITION', field: 'position', align: 'left' as const },
-  { name: 'basicSalary', label: 'SALARY', field: 'basicSalary', align: 'left' as const },
+  { name: 'profile', label: 'EMPLOYEE', field: 'fullName', align: 'left' as const },
+  { name: 'role', label: 'POSITION', field: 'position', align: 'left' as const },
+  { name: 'status', label: 'STATUS', field: 'status', align: 'left' as const },
   { name: 'actions', label: 'ACTIONS', field: 'actions', align: 'right' as const },
 ]
 
@@ -353,31 +346,18 @@ watch(selectedTenantId, async (newId) => {
   await fetchEmployeesByTenant(idToFetch)
 })
 
-// 3. Watcher: Mendeteksi perubahan pada formEmployee
 watch(() => formEmployee.value.tenantId, async (newTenantId) => {
-  formEmployee.value.divisionId = ''
+  if (!isEdit.value) formEmployee.value.divisionId = ''
   await fetchDivisionByTenant(newTenantId)
 })
 
 onMounted(async () => {
-
   isLoading.value = true
   await fetchAllTenants()
-  await fetchEmployees()
   await fetchEmployeesByTenant(selectedTenantId.value || defaultTenants)
   await fetchDivisionByTenant(selectedTenantId.value || defaultTenants)
-  await fetchEmployeesById(null)
   isLoading.value = false
-
-  // const initTenantId = selectedTenantId.value || defaultTenants
-  // await Promise.all([
-  //   fetchAllTenants(),
-  //   fetchEmployees(),
-
-  //   fetchEmployeesByTenant(initTenantId)
-  // ])
 })
-
 
 // 1. Tambahkan fetchTenants (semua tenant) untuk dropdown
 const fetchAllTenants = async () => {
@@ -388,8 +368,6 @@ const fetchAllTenants = async () => {
     $q.notify({ color: 'negative', message: 'Failed to load tenant list' })
   }
 }
-
-
 
 // 1. Fungsi Utama untuk mengambil data karyawan berdasarkan ID Tenant
 const fetchEmployeesByTenant = async (tenantId: string | null) => {
@@ -406,7 +384,14 @@ const fetchEmployeesByTenant = async (tenantId: string | null) => {
   try {
     // Memanggil API getEmployeeByTenandId untuk mengisi tabel
     const data = await getEmployeeByTenandId(tenantId)
-    employees.value = data
+    // Map data to match template expectation
+    employees.value = data.map((e: EmployeeResponseDto) => ({
+      ...e,
+      initials: (e.fullName || '').substring(0, 2).toUpperCase(),
+      avatarBg: '#1a73e8',
+      nik: e.employeeCode,
+      status: 'Permanent'
+    })) as EmployeeRow[]
   } catch {
     $q.notify({
       color: 'negative',
@@ -419,70 +404,9 @@ const fetchEmployeesByTenant = async (tenantId: string | null) => {
   }
 }
 
-const fetchEmployeesById = async (employeeId: string | null) => {
-  if (!employeeId) {
-    employeeViewFrom.value = {
-      id: '',
-      tenantId: '',
-      divisionId: '',
-      employeeCode: '',
-      fullName: '',
-      position: '',
-      basicSalary: 0,
-      facePhotoUrl: '',
-      faceEmbedding: '',
-    }
-    return
-  }
-
-  isLoading.value = true
-  $q.loading.show({
-    message: 'Loading employee by id for selected employee...'
-  })
-
-  try {
-    // Memanggil API getEmployeeById untuk mengisi tabel
-    const data = await getEmployeeById(employeeId)
-    employeeViewFrom.value = {
-      id: data.id,
-      tenantId: data.tenantId,
-      divisionId: data.divisionId,
-      employeeCode: data.employeeCode,
-      fullName: data.fullName,
-      position: data.position,
-      basicSalary: data.basicSalary,
-      facePhotoUrl: data.facePhotoUrl || '',
-      faceEmbedding: data.faceEmbedding || '',
-    }
-
-
-
-  } catch {
-    $q.notify({
-      color: 'negative',
-      message: 'Failed to fetch employee by id for this employee'
-    })
-    employeeViewFrom.value = {
-      id: '',
-      tenantId: '',
-      divisionId: '',
-      employeeCode: '',
-      fullName: '',
-      position: '',
-      basicSalary: 0,
-      facePhotoUrl: '',
-      faceEmbedding: '',
-    }
-  } finally {
-    isLoading.value = false
-    $q.loading.hide()
-  }
-}
-
 // Computed Options
 const tenantOptions = computed(() => tenants.value.map(t => ({ label: t.name, value: t.id })))
 const divisionOptions = computed(() => divisions.value.map(d => ({ label: d.name, value: d.id })))
-
 
 const fetchDivisionByTenant = async (tenantId: string | null) => {
   if (!tenantId) {
@@ -510,30 +434,12 @@ const fetchDivisionByTenant = async (tenantId: string | null) => {
   }
 }
 
-const fetchEmployees = async () => {
-  isLoading.value = true
-  $q.loading.show({
-    message: 'Fetching employees...'
-  })
-  try {
-    employees.value = await getEmployeeByTenandId(defaultTenants)
-  } catch { // <--- Hapus (error) jika tidak digunakan
-    $q.notify({ color: 'negative', message: 'Failed to fetch employees' })
-  } finally {
-    isLoading.value = false
-    $q.loading.hide()
-  }
-}
-
 // 4. Update Filtered Employees (Filter Tenant + Search)
 const filteredEmployees = computed(() => {
   let result = employees.value
 
   // Filter berdasarkan Tenant yang dipilih
   if (selectedTenantId.value) {
-    console.log({
-      selected: selectedTenantId.value
-    })
     result = result.filter(e => e.tenantId === selectedTenantId.value)
   }
 
@@ -551,8 +457,6 @@ const filteredEmployees = computed(() => {
   return result
 })
 
-
-// Tambahkan fungsi save (seperti pada TenantPage sebelumnya)
 const saveEmployee = async () => {
   if (!formEmployee.value.fullName || !formEmployee.value.employeeCode) {
     $q.notify({ color: 'warning', message: 'Please fill name and employee code' })
@@ -562,30 +466,14 @@ const saveEmployee = async () => {
   isSubmitting.value = true
   try {
     if (isEdit.value) {
-      console.log({
-        formEmployee: formEmployee.value
-      });
-
-      // Logika Update
-
-      //  UpdateEmployeeRequestDto
-      // pakai dto updateEmployee
-
-
-
       await updateEmployee(formEmployee.value, selectedId.value)
-      $q.notify({
-        color: 'positive',
-        message: 'Employee updated successfully'
-      })
+      $q.notify({ color: 'positive', message: 'Employee updated successfully' })
     } else {
-      // Logika Create (panggil service createEmployee jika ada)
       await createEmployee(formEmployee.value)
-      $q.notify({ color: 'positive', message: 'Employee added successfully', icon: 'check', })
+      $q.notify({ color: 'positive', message: 'Employee added successfully', icon: 'check' })
     }
-
     showForm.value = false
-    await fetchEmployeesByTenant(selectedTenantId.value) // Refresh tabel
+    await fetchEmployeesByTenant(selectedTenantId.value || defaultTenants)
   } catch {
     $q.notify({ color: 'negative', message: 'Failed to save data' })
   } finally {
@@ -593,61 +481,31 @@ const saveEmployee = async () => {
   }
 }
 
-
-const confirmDelete = (row: EmployeeResponseDto) => {
+// Delete confirmation + API call
+const confirmDelete = (row: EmployeeRow) => {
   $q.dialog({
     title: 'Confirm Delete',
     message: `Are you sure you want to delete employee "${row.fullName}"?`,
     persistent: true,
-    ok: {
-      label: 'Delete',
-      color: 'negative',
-      flat: true
-    },
-    cancel: {
-      label: 'Cancel',
-      color: 'grey-7',
-      flat: true
-    }
+    ok: { label: 'Delete', color: 'negative', flat: true },
+    cancel: { label: 'Cancel', color: 'grey-7', flat: true }
   }).onOk(() => {
     void onDeleteEmployee(row.id)
   })
 }
 
 const onDeleteEmployee = async (id: string) => {
-  // 1. Tampilkan loading overlay
-  $q.loading.show({
-    message: 'Deleting employee...'
-  })
-
+  $q.loading.show({ message: 'Deleting employee...' })
   try {
-    // 2. Eksekusi API call
-    console.log({ id })
     await deleteEmployee(id)
-
-    // 3. Update State Lokal secara Reaktif
-    // Menggunakan filter untuk menghapus data dari UI tanpa re-fetch
-    employees.value = employees.value.filter(t => t.id !== id)
-
-    // 4. Notifikasi Berhasil
-    $q.notify({
-      color: 'positive',
-      message: 'Employee deleted successfully',
-      icon: 'delete'
-    })
+    employees.value = employees.value.filter(e => e.id !== id)
+    $q.notify({ color: 'positive', message: 'Employee deleted successfully', icon: 'delete' })
   } catch {
-    // 5. Penanganan Error
-    $q.notify({
-      color: 'negative',
-      message: 'Failed to delete Employee. Please try again.'
-    })
+    $q.notify({ color: 'negative', message: 'Failed to delete employee. Please try again.' })
   } finally {
-    // 6. Tutup loading overlay (selalu dijalankan baik sukses maupun gagal)
     $q.loading.hide()
   }
 }
-
-
 </script>
 
 <style scoped>
@@ -794,127 +652,5 @@ const onDeleteEmployee = async (id: string) => {
 .modal-sub {
   font-size: 13px;
   color: #667085;
-}
-
-
-.action-group {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 6px;
-}
-
-/* Hover effect */
-.action-group .q-btn:hover {
-  background: rgba(0, 0, 0, 0.04);
-  transform: scale(1.05);
-  transition: all 0.15s ease;
-}
-
-/* Ukuran font judul */
-.section-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a202c;
-}
-
-.section-sub {
-  font-size: 13px;
-}
-
-/* Lebar Select agar tidak terlalu memakan tempat */
-.tenant-select {
-  width: 200px;
-}
-
-.tenant-select :deep(.q-field__control) {
-  border-radius: 8px;
-}
-
-/* Lebar Search sesuai gambar referensi */
-.search-input {
-  width: 280px;
-}
-
-.search-input :deep(.q-field__control) {
-  border-radius: 8px;
-  background: #fff;
-}
-
-.header-row {
-  align-items: center;
-}
-
-/* RIGHT SIDE */
-.header-actions {
-  align-items: center;
-}
-
-/* SIZE KONSISTEN (INI KUNCI!) */
-.tenant-select,
-.search-input,
-.add-btn {
-  height: 40px;
-}
-
-/* Samain tinggi input Quasar */
-:deep(.q-field__control) {
-  height: 40px;
-  border-radius: 10px;
-}
-
-/* SEARCH lebih panjang */
-.search-input {
-  width: 260px;
-}
-
-/* SELECT lebih kecil */
-.tenant-select {
-  width: 200px;
-}
-
-/* BUTTON STYLE kayak gambar */
-.add-btn {
-  border-radius: 10px;
-  padding: 0 18px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-}
-
-.section-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a202c;
-}
-
-.section-sub {
-  font-size: 13px;
-  color: #667085;
-}
-
-/* Samakan tinggi semua */
-.tenant-select,
-.search-input,
-.add-btn {
-  height: 40px;
-}
-
-:deep(.q-field__control) {
-  height: 40px;
-  border-radius: 10px;
-}
-
-.search-input {
-  width: 260px;
-}
-
-.tenant-select {
-  width: 200px;
-}
-
-.add-btn {
-  border-radius: 10px;
-  padding: 0 18px;
-  font-weight: 600;
 }
 </style>

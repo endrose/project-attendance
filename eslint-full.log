@@ -1,0 +1,13 @@
+
+C:\Users\JEDIDIAH\Documents\AksaDigitex.Attendance.BackOffice\src\pages\MasterData\PublicHoliday.vue
+  345:5  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+  390:5  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+  415:5  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+
+C:\Users\JEDIDIAH\Documents\AksaDigitex.Attendance.BackOffice\src\pages\MasterData\RolesPages.vue
+  201:5  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+  225:5  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+  247:5  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+
+✖ 6 problems (6 errors, 0 warnings)
+
