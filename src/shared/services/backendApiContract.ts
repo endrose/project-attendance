@@ -4,7 +4,7 @@ import type { LoginRequestBody, LoginResponseDto } from "../api/types/auth.types
 import type { CreateTenantRequestDto, TenantResponseDto } from "../api/types/tenant.types";
 import { useAuthStore } from 'src/stores/auth';
 import type { CreateEmployeeRequestDto, EmployeeResponseDto } from "../api/types/employee.type";
-import type { DivisionResponsetDto } from "../api/types/division.type";
+import type { CreateDivisionRequestDto, DivisionResponsetDto } from "../api/types/division.type";
 
 const API_PREFIX = 'attendance/v1';
 
@@ -149,6 +149,34 @@ export async function getDivisionByTenandId(tenantId: string) {
   return data;
 }
 
+export async function getDivisionById(id: string) {
+  const { data } = await backendClient.get<DivisionResponsetDto>(`${API_PREFIX}/Division/GetDivisionById/${id}`);
+  return data;
+}
+
+export async function createDivision(body: CreateDivisionRequestDto) {
+  const { data } = await backendClient.post<DivisionResponsetDto[]>(`${API_PREFIX}/Division/CreateDivision`, body);
+  return data;
+}
+
+
+export async function deleteEmployee(employeeId: string) {
+  const { data } = await backendClient.delete<EmployeeResponseDto>(`${API_PREFIX}/Employee/DeleteEmployee/${employeeId}`,
+  );
+  return data;
+}
+
+export async function deleteDivision(id: string) {
+  const { data } = await backendClient.delete<DivisionResponsetDto>(`${API_PREFIX}/Division/DeleteDivision/${id}`,
+  );
+  return data;
+}
+
+export async function updateDivision(body: CreateDivisionRequestDto, id: string) {
+  const { data } = await backendClient.put<DivisionResponsetDto[]>(`${API_PREFIX}/Division/UpdateDivision/${id}`, body);
+  return data;
+}
+
 
 export const BackendApiContract = {
   baseUrl: BACKEND_BASE_URL,
@@ -165,6 +193,11 @@ export const BackendApiContract = {
     getDivisionByTenandId: 'GET attendance/v1/Division/GetAllDivisionsByTenant/:tenantId',
     getEmployeeById: 'GET attendance/v1/Employee/GetEmployeeById',
     updateEmployee: 'PUT attendance/v1/Employee/UpdateEmployee/:employeeId',
+    getDivisionById: 'GET attendance/v1/Division/GetDivisionById/:id',
+    deleteEmployee: 'DELETE attendance/v1/Employee/DeleteEmployee/:employeeId',
+    createDivision: 'POST attendance/v1/Division/CreateDivision',
+    deleteDivision: 'DELETE attendance/v1/Division/DeleteDivision/:id',
+
 
   },
   login,
@@ -178,5 +211,9 @@ export const BackendApiContract = {
   createEmployee,
   getDivisionByTenandId,
   getEmployeeById,
-  updateEmployee
+  updateEmployee,
+  getDivisionById,
+  deleteEmployee,
+  createDivision,
+  deleteDivision
 } as const;

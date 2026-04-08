@@ -5,22 +5,19 @@
       <q-card-section>
 
         <!-- Header -->
-        <div class="row items-center justify-between q-mb-md">
-          <div>
-            <div class="section-title">Employee Master Data</div>
-            <div class="section-sub">Manage all employee records, departments, and roles</div>
+        <!-- ROW 1 -->
+        <div class="row items-center justify-between q-mb-xs">
+
+          <!-- TITLE -->
+          <div class="section-title">
+            Employee Master Data
           </div>
 
-          <div class="row items-center q-gutter-md">
-            <!-- SELECT TENANT -->
-            <q-select v-model="selectedTenantId" :options="tenantOptions" label="Filter by Tenant" outlined dense
-              emit-value map-options class="tenant-select" clearable>
-              <template v-slot:prepend>
-                <q-icon name="business" />
-              </template>
-            </q-select>
+          <!-- ACTION -->
+          <div class="row items-center q-gutter-sm">
 
-
+            <q-select v-model="selectedTenantId" :options="tenantOptions" dense outlined emit-value map-options
+              class="tenant-select" />
 
             <q-input v-model="searchQuery" dense outlined placeholder="Search employees..." class="search-input">
               <template v-slot:prepend>
@@ -28,9 +25,15 @@
               </template>
             </q-input>
 
-            <q-btn unelevated color="dark" icon="person_add" label="Add New Employee" size="sm" class="action-btn-dark"
+            <q-btn unelevated color="indigo-10" icon="person_add" label="ADD NEW EMPLOYEE" class="add-btn"
               @click="openForm" />
+
           </div>
+        </div>
+
+        <!-- ROW 2 (SUBTITLE) -->
+        <div class="section-sub q-mb-md">
+          Manage all employee records, departments, and roles
         </div>
 
         <!-- Table -->
@@ -72,13 +75,18 @@
 
           <!-- Actions -->
           <template #body-cell-actions="props">
-            <q-td :props="props">
-              <div class="row items-center q-gutter-sm justify-end">
-                <q-btn flat round dense icon="visibility" size="sm" color="grey-6" @click="openViewForm(props.row)">
+            <q-td :props="props" class="text-right">
+              <div class="action-group">
+                <q-btn flat round dense icon="visibility" size="sm" color="primary" @click="openViewForm(props.row)">
                   <q-tooltip>View Details</q-tooltip>
                 </q-btn>
-                <q-btn flat round dense icon="edit" size="sm" color="grey-6" @click="openEditForm(props.row)">
+
+                <q-btn flat round dense icon="edit" size="sm" color="warning" @click="openEditForm(props.row)">
                   <q-tooltip>Edit</q-tooltip>
+                </q-btn>
+
+                <q-btn flat round dense icon="delete" size="sm" color="negative" @click="confirmDelete(props.row)">
+                  <q-tooltip>Delete</q-tooltip>
                 </q-btn>
               </div>
             </q-td>
@@ -97,7 +105,7 @@
 
       <!-- DIALOG FORM -->
       <q-dialog v-model="showForm" persistent>
-        <q-card class="modal-card" style="min-width: 450px;">
+        <q-card class="modal-card">
           <q-card-section class="modal-header">
             <div class="modal-title">
               {{ isView ? 'Employee Details' : isEdit ? 'Edit Employee' : 'Add New Employee' }}
@@ -126,7 +134,7 @@
               :disable="isView" />
           </q-card-section>
 
-          <q-card-actions align="right" class="q-pa-md">
+          <q-card-actions class="row justify-end q-gutter-sm q-mt-lg">
             <q-btn flat label="Cancel" color="grey-7" v-close-popup />
             <q-btn v-if="!isView" label="Save" color="dark" unelevated :loading="isSubmitting" @click="saveEmployee" />
           </q-card-actions>
@@ -147,6 +155,7 @@ import { useQuasar } from 'quasar'
 const $q = useQuasar()
 
 import { ref, computed, onMounted, watch } from 'vue'
+import { deleteEmployee } from '../../shared/services/backendApiContract'
 
 const currentPage = ref(1)
 const searchQuery = ref('')
@@ -551,6 +560,62 @@ const saveEmployee = async () => {
     isSubmitting.value = false
   }
 }
+
+
+const confirmDelete = (row: EmployeeResponseDto) => {
+  $q.dialog({
+    title: 'Confirm Delete',
+    message: `Are you sure you want to delete employee "${row.fullName}"?`,
+    persistent: true,
+    ok: {
+      label: 'Delete',
+      color: 'negative',
+      flat: true
+    },
+    cancel: {
+      label: 'Cancel',
+      color: 'grey-7',
+      flat: true
+    }
+  }).onOk(() => {
+    void onDeleteEmployee(row.id)
+  })
+}
+
+const onDeleteEmployee = async (id: string) => {
+  // 1. Tampilkan loading overlay
+  $q.loading.show({
+    message: 'Deleting employee...'
+  })
+
+  try {
+    // 2. Eksekusi API call
+    console.log({ id })
+    await deleteEmployee(id)
+
+    // 3. Update State Lokal secara Reaktif
+    // Menggunakan filter untuk menghapus data dari UI tanpa re-fetch
+    employees.value = employees.value.filter(t => t.id !== id)
+
+    // 4. Notifikasi Berhasil
+    $q.notify({
+      color: 'positive',
+      message: 'Employee deleted successfully',
+      icon: 'delete'
+    })
+  } catch {
+    // 5. Penanganan Error
+    $q.notify({
+      color: 'negative',
+      message: 'Failed to delete Employee. Please try again.'
+    })
+  } finally {
+    // 6. Tutup loading overlay (selalu dijalankan baik sukses maupun gagal)
+    $q.loading.hide()
+  }
+}
+
+
 </script>
 
 <style scoped>
@@ -697,5 +762,127 @@ const saveEmployee = async () => {
 .modal-sub {
   font-size: 13px;
   color: #667085;
+}
+
+
+.action-group {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Hover effect */
+.action-group .q-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  transform: scale(1.05);
+  transition: all 0.15s ease;
+}
+
+/* Ukuran font judul */
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.section-sub {
+  font-size: 13px;
+}
+
+/* Lebar Select agar tidak terlalu memakan tempat */
+.tenant-select {
+  width: 200px;
+}
+
+.tenant-select :deep(.q-field__control) {
+  border-radius: 8px;
+}
+
+/* Lebar Search sesuai gambar referensi */
+.search-input {
+  width: 280px;
+}
+
+.search-input :deep(.q-field__control) {
+  border-radius: 8px;
+  background: #fff;
+}
+
+.header-row {
+  align-items: center;
+}
+
+/* RIGHT SIDE */
+.header-actions {
+  align-items: center;
+}
+
+/* SIZE KONSISTEN (INI KUNCI!) */
+.tenant-select,
+.search-input,
+.add-btn {
+  height: 40px;
+}
+
+/* Samain tinggi input Quasar */
+:deep(.q-field__control) {
+  height: 40px;
+  border-radius: 10px;
+}
+
+/* SEARCH lebih panjang */
+.search-input {
+  width: 260px;
+}
+
+/* SELECT lebih kecil */
+.tenant-select {
+  width: 200px;
+}
+
+/* BUTTON STYLE kayak gambar */
+.add-btn {
+  border-radius: 10px;
+  padding: 0 18px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.section-sub {
+  font-size: 13px;
+  color: #667085;
+}
+
+/* Samakan tinggi semua */
+.tenant-select,
+.search-input,
+.add-btn {
+  height: 40px;
+}
+
+:deep(.q-field__control) {
+  height: 40px;
+  border-radius: 10px;
+}
+
+.search-input {
+  width: 260px;
+}
+
+.tenant-select {
+  width: 200px;
+}
+
+.add-btn {
+  border-radius: 10px;
+  padding: 0 18px;
+  font-weight: 600;
 }
 </style>
